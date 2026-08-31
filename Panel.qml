@@ -8,7 +8,7 @@ import "Model.js" as Model
 
 Panel {
   id: root
-  moduleName: "z13.power"
+  moduleName: "io.github.randallyash.z13-power"
   ipcTarget: "omarchy.power"
   // manageIpc: false so this panel can own the single IpcHandler the target
   // permits — needed for the togglePercentage method below.
