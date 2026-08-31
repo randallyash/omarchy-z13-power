@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "z13.power",
+  "name": "Z13 Power",
+  "version": "1.0.0",
+  "author": "Randall Yash",
+  "description": "ROG Flow Z13 battery flyout: Max / Perf / Mid / Quiet / Low, Automatic, Lock, charge-to-100%, and low-battery warnings.",
+  "kinds": ["bar-widget", "service"],
+  "entryPoints": {
+    "barWidget": "Panel.qml",
+    "service": "Service.qml"
+  },
+  "barWidget": {
+    "displayName": "Z13 Power",
+    "description": "Battery plus z13-power profiles",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
