@@ -12,11 +12,15 @@ that backend the glyph still shows charge, and the pills will not drive TDP.
 
 ## Install
 
+1. Install **z13-power** and **z13ctl-bin** from the table above (GZ302 only).
+2. Then add this widget:
+
 ```sh
 omarchy plugin add https://github.com/randallyash/omarchy-z13-power.git --enable
 ```
 
-That clones and enables the plugin. It does not rewrite your bar.
+That clones and enables the plugin. It does not rewrite your bar and does not
+install the backend.
 
 ## Usage
 
@@ -32,10 +36,16 @@ Put it in the right-hand (battery) slot:
 omarchy bar move io.github.randallyash.z13-power --section right
 ```
 
-External dependencies (install from the backend repo, not from this plugin):
+This is a **manual-setup** plugin. `omarchy plugin add` only installs the
+bar widget. Profile apply, TDP, and charge cap come from a separately
+installed backend:
 
-- [z13-power](https://github.com/randallyash/rog-z13-power-management) — profiles, TDP, charge cap
-- [`z13ctl-bin`](https://github.com/dahui/z13ctl) — AUR, hardware control for the GZ302
+| Dependency | Provenance | Install |
+|---|---|---|
+| **z13-power** | https://github.com/randallyash/rog-z13-power-management (GPL-3.0-or-later) | clone that repo, then `cd packaging/arch/z13-power-git && makepkg -si`, or `./install.sh` |
+| **z13ctl-bin** | AUR, upstream https://github.com/dahui/z13ctl | `paru -S z13ctl-bin` (required by z13-power, not by this widget itself) |
+
+Both land as `/usr/bin/z13-power` (package) or `~/.local/bin/z13-power` (from-source). This plugin never downloads them; `z13-io.py` only opens those two fixed paths after `O_NOFOLLOW` + regular-file checks.
 
 ## Remove
 

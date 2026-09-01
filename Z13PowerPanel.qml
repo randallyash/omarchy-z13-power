@@ -74,30 +74,19 @@ Column {
   property bool diagnoseOpen: false
   property string diagnoseText: ""
   property bool diagnoseBusy: false
+  readonly property int diagnoseCap: 4000
+  readonly property string ioScript: String(Qt.resolvedUrl("z13-io.py")).replace(/^file:\/\//, "")
 
-  function binCommand(name, args) {
-    // ~/.local/bin (from-source), then /usr/bin (package), then PATH.
-    // Omarchy's shell PATH often skips ~/.local/bin.
-    var rest = args ? args : []
-    return [
-      "bash", "-c",
-      'for p in "$HOME/.local/bin/$1" "/usr/bin/$1"; do [ -x "$p" ] && exec "$p" "${@:2}"; done; exec "$1" "${@:2}"',
-      "z13-bin",
-      name
-    ].concat(rest)
+  function ioCmd() {
+    var a = ["python3", root.ioScript]
+    for (var i = 0; i < arguments.length; i++) a.push(arguments[i])
+    return a
   }
 
   function send(op, extra) {
     var payload = extra ? extra : {}
     payload.op = op
-    // Write the command file directly. The packaged /usr/bin/z13-power
-    // may not have `cmd` yet, and the shell's PATH often skips ~/.local/bin.
-    cmdProc.command = [
-      "bash", "-c",
-      "mkdir -p \"$HOME/.local/state/z13-power\" && printf '%s\\n' \"$1\" > \"$HOME/.local/state/z13-power/command.json.tmp\" && mv -f \"$HOME/.local/state/z13-power/command.json.tmp\" \"$HOME/.local/state/z13-power/command.json\"",
-      "z13-cmd",
-      JSON.stringify(payload)
-    ]
+    cmdProc.command = root.ioCmd("write-command", JSON.stringify(payload))
     cmdProc.running = true
   }
 
@@ -139,54 +128,73 @@ Column {
     if (root.diagnoseBusy) return
     root.diagnoseBusy = true
     root.diagnoseText = ""
-    diagnoseProc.command = binCommand("z13-power", ["diagnose"])
+    diagnoseProc.command = root.ioCmd("run", "--timeout", "8", "--max-bytes", "32768", "--", "z13-power", "diagnose")
     diagnoseProc.running = false
     diagnoseProc.running = true
   }
 
-  FileView {
-    id: statusFile
-    path: Quickshell.env("HOME") + "/.local/state/z13-power/status.json"
-    watchChanges: true
-    printErrors: false
-    onFileChanged: reload()
-    onLoaded: {
-      try {
-        root.status = JSON.parse(text())
-      } catch (e) {}
+  function reloadState() {
+    if (!statusProc.running) statusProc.running = true
+    if (!confProc.running) confProc.running = true
+  }
+
+  Process {
+    id: statusProc
+    command: root.ioCmd("read-status")
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        try {
+          var s = JSON.parse(String(text || "{}"))
+          if (s && typeof s === "object")
+            root.status = Object.assign({}, root.status, s)
+        } catch (e) {}
+      }
     }
   }
 
-  FileView {
-    id: batteryFile
-    path: Quickshell.env("HOME") + "/.config/z13-power/battery.conf"
-    watchChanges: true
-    printErrors: false
-    onFileChanged: reload()
-    onLoaded: root.confChargeLimit = root.parseChargeLimit(text())
+  Process {
+    id: confProc
+    command: root.ioCmd("read-battery-conf")
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        try {
+          var o = JSON.parse(String(text || "{}"))
+          root.confChargeLimit = (o && o.charge_limit !== undefined) ? o.charge_limit : null
+        } catch (e) {}
+      }
+    }
   }
 
   Timer {
     interval: 1000
     running: root.visible
     repeat: true
-    onTriggered: {
-      statusFile.reload()
-      batteryFile.reload()
-    }
+    triggeredOnStart: true
+    onTriggered: root.reloadState()
   }
 
-  Component.onCompleted: {
-    statusFile.reload()
-    batteryFile.reload()
-  }
-  onVisibleChanged: if (visible) {
-    statusFile.reload()
-    batteryFile.reload()
-  }
+  Component.onCompleted: root.reloadState()
+  onVisibleChanged: if (visible) root.reloadState()
 
   Process {
     id: cmdProc
+  }
+
+  Process {
+    id: resolveProc
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        var p = String(text || "").trim()
+        if (p.indexOf("/") === 0) {
+          cmdProc.command = [p]
+          cmdProc.running = false
+          cmdProc.running = true
+        }
+      }
+    }
   }
 
   Process {
@@ -194,7 +202,10 @@ Column {
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
-        root.diagnoseText = String(text || "").trim()
+        var s = String(text || "").trim()
+        if (s.length > root.diagnoseCap)
+          s = s.substring(0, root.diagnoseCap)
+        root.diagnoseText = s
         root.diagnoseBusy = false
         root.diagnoseOpen = true
       }
@@ -414,9 +425,9 @@ Column {
       fontFamily: root.fontFamily
       bordered: true
       onClicked: {
-        cmdProc.command = binCommand("z13-power-settings")
-        cmdProc.running = false
-        cmdProc.running = true
+        resolveProc.command = root.ioCmd("resolve-bin", "z13-power-settings")
+        resolveProc.running = false
+        resolveProc.running = true
       }
     }
 
@@ -437,6 +448,7 @@ Column {
     visible: root.diagnoseOpen && root.diagnoseText !== ""
     width: parent.width
     text: root.diagnoseText
+    textFormat: Text.PlainText
     color: Qt.darker(root.foreground, 1.2)
     font.family: root.fontFamily
     font.pixelSize: Style.font.caption

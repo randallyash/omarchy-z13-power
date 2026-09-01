@@ -25,6 +25,31 @@ Panel {
   property string z13Temp: "—"
   property string z13ChargeLimit: ""
   property string z13ModeGlyph: ""
+  readonly property string ioScript: String(Qt.resolvedUrl("z13-io.py")).replace(/^file:\/\//, "")
+
+  function ioCmd() {
+    var a = ["python3", root.ioScript]
+    for (var i = 0; i < arguments.length; i++) a.push(arguments[i])
+    return a
+  }
+
+  function applyStatusJson(raw) {
+    try {
+      var s = JSON.parse(String(raw || "{}"))
+      root.z13Present = !!(s && s.mode)
+      root.z13Tdp = (s && s.tdp !== undefined && s.tdp !== null && s.tdp !== "")
+        ? String(s.tdp).substring(0, 16) + "W" : "—"
+      if (s && s.charge_limit !== undefined && s.charge_limit !== null && s.charge_limit !== "")
+        root.z13ChargeLimit = String(s.charge_limit).substring(0, 8) + "%"
+      root.z13ModeGlyph = Model.modeGlyph(s && s.mode)
+    } catch (e) {
+      root.z13Present = false
+      root.z13Tdp = "—"
+      root.z13ChargeLimit = ""
+      root.z13ModeGlyph = ""
+    }
+  }
+
   readonly property string z13TdpLabel: {
     if (root.z13Draw !== "") {
       if (root.z13Tdp && root.z13Tdp !== "—")
@@ -180,7 +205,7 @@ Panel {
   function setProfile(profile) {
     if (root.z13Present) return
     if (!profile || actionProc.running) return
-    actionProc.command = ["omarchy-powerprofiles-set", root.discharging ? "battery" : "ac", profile]
+    actionProc.command = root.ioCmd("run", "--timeout", "3", "--", "omarchy-powerprofiles-set", root.discharging ? "battery" : "ac", profile)
     actionProc.running = true
   }
 
@@ -208,8 +233,7 @@ Panel {
       }
 
       refresh()
-      z13Detect.reload()
-      batteryConf.reload()
+      root.reloadZ13Files()
       var idx = profiles.indexOf(activeProfile)
       profileIndex = idx >= 0 ? idx : 0
       cursorActive = false
@@ -224,19 +248,19 @@ Panel {
 
   Process {
     id: batteryProc
-    command: ["omarchy-battery-status", "--shell"]
+    command: root.ioCmd("run", "--timeout", "3", "--max-bytes", "8192", "--", "omarchy-battery-status", "--shell")
     stdout: StdioCollector { waitForEnd: true; onStreamFinished: root.updateKeyValue(text, "battery") }
   }
 
   Process {
     id: profilesProc
-    command: ["omarchy-powerprofiles-list", "--active-state"]
+    command: root.ioCmd("run", "--timeout", "3", "--max-bytes", "8192", "--", "omarchy-powerprofiles-list", "--active-state")
     stdout: StdioCollector { waitForEnd: true; onStreamFinished: root.updateProfiles(text) }
   }
 
   Process {
     id: systemProc
-    command: ["omarchy-system-stats"]
+    command: root.ioCmd("run", "--timeout", "3", "--max-bytes", "8192", "--", "omarchy-system-stats")
     stdout: StdioCollector { waitForEnd: true; onStreamFinished: root.updateKeyValue(text, "system") }
   }
 
@@ -245,62 +269,47 @@ Panel {
     onExited: root.refresh()
   }
 
-  FileView {
-    id: z13Detect
-    path: Quickshell.env("HOME") + "/.local/state/z13-power/status.json"
-    watchChanges: true
-    printErrors: false
-    onFileChanged: reload()
-    onLoaded: {
-      try {
-        var s = JSON.parse(text())
-        root.z13Present = !!(s && s.mode)
-        root.z13Tdp = (s && s.tdp !== undefined && s.tdp !== null && s.tdp !== "")
-          ? String(s.tdp) + "W" : "—"
-        root.z13ChargeLimit = (s && s.charge_limit !== undefined && s.charge_limit !== null && s.charge_limit !== "")
-          ? String(s.charge_limit) + "%" : ""
-        root.z13ModeGlyph = Model.modeGlyph(s && s.mode)
-      } catch (e) {
-        root.z13Present = false
-        root.z13Tdp = "—"
-        root.z13ChargeLimit = ""
-        root.z13ModeGlyph = ""
+  Process {
+    id: statusProc
+    command: root.ioCmd("read-status")
+    stdout: StdioCollector { waitForEnd: true; onStreamFinished: root.applyStatusJson(text) }
+  }
+
+  Process {
+    id: batteryConfProc
+    command: root.ioCmd("read-battery-conf")
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        try {
+          var o = JSON.parse(String(text || "{}"))
+          if (o && o.charge_limit !== undefined)
+            root.z13ChargeLimit = String(o.charge_limit).substring(0, 8) + "%"
+        } catch (e) {}
       }
     }
   }
 
-  FileView {
-    id: batteryConf
-    path: Quickshell.env("HOME") + "/.config/z13-power/battery.conf"
-    watchChanges: true
-    printErrors: false
-    onFileChanged: reload()
-    onLoaded: {
-      var m = String(text() || "").match(/charge_limit\s*=\s*(\d+)/)
-      if (m)
-        root.z13ChargeLimit = m[1] + "%"
-    }
+  function reloadZ13Files() {
+    if (!statusProc.running) statusProc.running = true
+    if (!batteryConfProc.running) batteryConfProc.running = true
   }
 
-  Component.onCompleted: {
-    z13Detect.reload()
-    batteryConf.reload()
-  }
+  Component.onCompleted: root.reloadZ13Files()
 
   Process {
     id: drawProc
-    command: ["bash", "-c",
-      'for d in /sys/class/hwmon/hwmon*; do read n < "$d/name" || continue; [ "$n" = amdgpu ] || continue; w=$(cat "$d/power1_average" 2>/dev/null || cat "$d/power1_input"); t=$(cat "$d/temp1_input" 2>/dev/null); echo "$w $t"; break; done']
+    command: root.ioCmd("read-hwmon")
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: {
-        var parts = String(text).trim().split(/\s+/)
-        var n = parseInt(parts[0], 10)
-        var t = parseInt(parts[1], 10)
-        if (isFinite(n) && n > 0)
-          root.z13Draw = String(Math.round(n / 1000000))
-        if (isFinite(t) && t > 0)
-          root.z13Temp = Math.round(t / 1000) + "°C"
+        try {
+          var o = JSON.parse(String(text || "{}"))
+          if (o.watts !== undefined)
+            root.z13Draw = String(o.watts).substring(0, 8)
+          if (o.temp_c !== undefined)
+            root.z13Temp = String(o.temp_c).substring(0, 8) + "°C"
+        } catch (e) {}
       }
     }
   }
@@ -313,7 +322,8 @@ Panel {
     onTriggered: if (!drawProc.running) drawProc.running = true
   }
 
-  Timer { interval: 5000; running: root.opened; repeat: true; onTriggered: root.refresh() }
+  Timer { interval: 5000; running: root.opened; repeat: true; onTriggered: { root.refresh(); root.reloadZ13Files() } }
+  Timer { interval: 2000; running: true; repeat: true; triggeredOnStart: true; onTriggered: root.reloadZ13Files() }
 
   // Rotate the status phrase while the panel is open and we're in a
   // rotating state (charging or on battery). The text swap is wrapped in a

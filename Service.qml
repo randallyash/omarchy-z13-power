@@ -34,12 +34,17 @@ Item {
     if (state.notify) sendLowBatteryWarning(state.level)
   }
 
+  readonly property string ioScript: String(Qt.resolvedUrl("z13-io.py")).replace(/^file:\/\//, "")
+
+  function ioCmd() {
+    var a = ["python3", root.ioScript]
+    for (var i = 0; i < arguments.length; i++) a.push(arguments[i])
+    return a
+  }
+
   function sendLowBatteryWarning(level) {
     if (warningProcess.running) return
-    warningProcess.command = [
-      "omarchy-battery-low",
-      String(level)
-    ]
+    warningProcess.command = root.ioCmd("run", "--timeout", "3", "--", "omarchy-battery-low", String(level))
     warningProcess.running = true
   }
 
@@ -50,28 +55,34 @@ Item {
   }
 
   function runPendingPowerProfile() {
-    powerProfileProcess.command = ["omarchy-powerprofiles-set", pendingPowerSource]
+    powerProfileProcess.command = root.ioCmd("run", "--timeout", "3", "--", "omarchy-powerprofiles-set", pendingPowerSource)
     pendingPowerSource = ""
     powerProfileProcess.running = true
   }
 
-  FileView {
-    id: z13Detect
-    path: Quickshell.env("HOME") + "/.local/state/z13-power/status.json"
-    watchChanges: true
-    printErrors: false
-    onFileChanged: reload()
-    onLoaded: {
-      try {
-        var s = JSON.parse(text())
-        root.z13Present = !!(s && s.mode)
-      } catch (e) {
-        root.z13Present = false
+  Process {
+    id: statusProc
+    command: root.ioCmd("read-status")
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        try {
+          var s = JSON.parse(String(text || "{}"))
+          root.z13Present = !!(s && s.mode)
+        } catch (e) {
+          root.z13Present = false
+        }
       }
     }
   }
 
-  Component.onCompleted: z13Detect.reload()
+  Timer {
+    interval: 2000
+    running: true
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: if (!statusProc.running) statusProc.running = true
+  }
 
   Process { id: warningProcess }
 

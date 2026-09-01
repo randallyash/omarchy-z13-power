@@ -9,13 +9,25 @@ function selectProfileIndex(index, delta, profiles) {
   return clampIndex(index + delta, values.length)
 }
 
+var MAX_PARSE_LINES = 64
+var MAX_PROFILES = 16
+var MAX_FIELD = 128
+
+function clipField(value) {
+  var s = String(value || "")
+  return s.length > MAX_FIELD ? s.substring(0, MAX_FIELD) : s
+}
+
 function parseKeyValue(raw) {
   var next = {}
   var lines = String(raw || "").split("\n")
-  for (var i = 0; i < lines.length; i++) {
+  var limit = Math.min(lines.length, MAX_PARSE_LINES)
+  for (var i = 0; i < limit; i++) {
     var idx = lines[i].indexOf("\t")
     if (idx <= 0) continue
-    next[lines[i].substring(0, idx)] = lines[i].substring(idx + 1).trim()
+    var key = clipField(lines[i].substring(0, idx))
+    if (!key) continue
+    next[key] = clipField(lines[i].substring(idx + 1).trim())
   }
   return next
 }
@@ -24,16 +36,20 @@ function parseProfiles(raw, previousIndex) {
   var lines = String(raw || "").split("\n")
   var list = []
   var active = ""
-  for (var i = 0; i < lines.length; i++) {
+  var limit = Math.min(lines.length, MAX_PARSE_LINES)
+  for (var i = 0; i < limit; i++) {
     var line = lines[i].trim()
     if (!line) continue
     var parts = line.split("\t")
-    list.push(parts[0])
-    if (parts[1] === "1") active = parts[0]
+    var name = clipField(parts[0])
+    if (!name) continue
+    if (list.length >= MAX_PROFILES) break
+    list.push(name)
+    if (parts[1] === "1") active = name
   }
   return {
     profiles: list,
-    activeProfile: active,
+    activeProfile: clipField(active),
     profileIndex: clampIndex(previousIndex || 0, list.length)
   }
 }
