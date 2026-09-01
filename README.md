@@ -40,12 +40,12 @@ This is a **manual-setup** plugin. `omarchy plugin add` only installs the
 bar widget. Profile apply, TDP, and charge cap come from a separately
 installed backend:
 
-| Dependency | Provenance | Install |
-|---|---|---|
-| **z13-power** | https://github.com/randallyash/rog-z13-power-management (GPL-3.0-or-later) | clone that repo, then `cd packaging/arch/z13-power-git && makepkg -si`, or `./install.sh` |
-| **z13ctl-bin** | AUR, upstream https://github.com/dahui/z13ctl | `paru -S z13ctl-bin` (required by z13-power, not by this widget itself) |
+| Dependency | Reviewable version | Provenance | Install |
+|---|---|---|---|
+| **z13-power** | **1.1.0+** (`z13-power --version`) | https://github.com/randallyash/rog-z13-power-management (GPL-3.0-or-later), packaged as `z13-power-git` | clone that repo, then `cd packaging/arch/z13-power-git && makepkg -si`, or `./install.sh` |
+| **z13ctl-bin** | **1.3.2+** (`z13ctl --version`) | https://github.com/dahui/z13ctl, AUR `z13ctl-bin` | install via the AUR helper of your choice |
 
-Both land as `/usr/bin/z13-power` (package) or `~/.local/bin/z13-power` (from-source). This plugin never downloads them; `z13-io.py` only opens those two fixed paths after `O_NOFOLLOW` + regular-file checks.
+Runtime enforcement: `z13-io.py` executes only root-owned files under `/usr/share/z13-power-management/` and `/usr/bin/` (never `~/.local/bin`), via a held file descriptor (`/proc/self/fd/N`), and refuses to run `z13-power diagnose` unless both version gates pass. It never downloads packages.
 
 ## Remove
 

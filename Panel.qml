@@ -467,6 +467,7 @@ Panel {
           Text {
             id: heroPercent
             text: root.batteryInfo.percentage || "—"
+            textFormat: Text.PlainText
             color: root.bar.foreground
             font.family: root.bar.fontFamily
             font.pixelSize: Style.font.displayLarge
@@ -634,5 +635,6 @@ Panel {
     color: root.bar.foreground
     font.family: root.bar.fontFamily
     font.pixelSize: Style.font.bodySmall
+    textFormat: Text.PlainText
   }
 }

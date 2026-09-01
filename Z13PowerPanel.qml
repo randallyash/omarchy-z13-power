@@ -183,21 +183,6 @@ Column {
   }
 
   Process {
-    id: resolveProc
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: {
-        var p = String(text || "").trim()
-        if (p.indexOf("/") === 0) {
-          cmdProc.command = [p]
-          cmdProc.running = false
-          cmdProc.running = true
-        }
-      }
-    }
-  }
-
-  Process {
     id: diagnoseProc
     stdout: StdioCollector {
       waitForEnd: true
@@ -265,6 +250,7 @@ Column {
     Text {
       id: heroTdp
       text: root.tdpLabel
+      textFormat: Text.PlainText
       color: root.foreground
       font.family: root.fontFamily
       font.pixelSize: Style.font.displayLarge
@@ -425,9 +411,9 @@ Column {
       fontFamily: root.fontFamily
       bordered: true
       onClicked: {
-        resolveProc.command = root.ioCmd("resolve-bin", "z13-power-settings")
-        resolveProc.running = false
-        resolveProc.running = true
+        cmdProc.command = root.ioCmd("spawn-settings")
+        cmdProc.running = false
+        cmdProc.running = true
       }
     }
 
@@ -481,6 +467,7 @@ Column {
       anchors.verticalCenter: parent.verticalCenter
       horizontalAlignment: Text.AlignRight
       text: value
+      textFormat: Text.PlainText
       color: root.foreground
       font.family: root.fontFamily
       font.pixelSize: Style.font.bodySmall
