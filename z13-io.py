@@ -66,52 +66,64 @@ PIN_Z13CTL = Pin(
 PIN_Z13_POWER = Pin(
     name="z13-power",
     rel=("share", "z13-power-management", "z13-power"),
-    sha256="14194c983032382f265dc8df2e9bcda814d7354c66c7a4048025afcdff1b9d68",
-    version_exact="z13-power 1.1.1",
-    tag="v1.1.1",
-    commit="459e77dfc0133cb1ae1a6c023eb52a6d148d7297",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.1/rog-z13-power-management-1.1.1.tar.gz",
-    artifact_sha256="1a784787464a5f4b82a3dbf3848d393407cea7fb58ef301a8a58e9f0fbaf6ee9",
+    sha256="60f63e2391492bf689de82e6974427468555564333824bbc75c6da416d1c87ca",
+    version_exact="z13-power 1.1.2",
+    tag="v1.1.2",
+    commit="2ecec501a1dcec83de420cda7a4b30b45129fe1e",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.2/rog-z13-power-management-1.1.2.tar.gz",
+    artifact_sha256="735770e72cb89183134f7516c3620e6e70ffd116197ea6b159dc45ac1f96805c",
     path="/usr/share/z13-power-management/z13-power",
 )
 PIN_Z13_SETTINGS = Pin(
     name="z13-power-settings",
     rel=("share", "z13-power-management", "z13-power-settings"),
-    sha256="6f70f9d2e2a9ee14770793bce08b0e95ddd6b240f100063a98578798961f23e0",
+    sha256="2dac65348f0093f03a103f27976af902cdd3074619421f0d88b8d3f70bc708ad",
     version_exact=None,
-    tag="v1.1.1",
-    commit="459e77dfc0133cb1ae1a6c023eb52a6d148d7297",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.1/rog-z13-power-management-1.1.1.tar.gz",
-    artifact_sha256="1a784787464a5f4b82a3dbf3848d393407cea7fb58ef301a8a58e9f0fbaf6ee9",
+    tag="v1.1.2",
+    commit="2ecec501a1dcec83de420cda7a4b30b45129fe1e",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.2/rog-z13-power-management-1.1.2.tar.gz",
+    artifact_sha256="735770e72cb89183134f7516c3620e6e70ffd116197ea6b159dc45ac1f96805c",
     path="/usr/share/z13-power-management/z13-power-settings",
 )
 PIN_Z13_COMMON = Pin(
     name="z13_power_common.py",
     rel=("share", "z13-power-management", "z13_power_common.py"),
-    sha256="5a0823d39ac43719c12c5ec73f11e75d1ffbf4e0311c7e24ae7e9d64b97b23d5",
+    sha256="fa52d53b2c81505df40f0ed4738ff67baf953b73f5314fbc267b54f7a4120963",
     version_exact=None,
-    tag="v1.1.1",
-    commit="459e77dfc0133cb1ae1a6c023eb52a6d148d7297",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.1/rog-z13-power-management-1.1.1.tar.gz",
-    artifact_sha256="1a784787464a5f4b82a3dbf3848d393407cea7fb58ef301a8a58e9f0fbaf6ee9",
+    tag="v1.1.2",
+    commit="2ecec501a1dcec83de420cda7a4b30b45129fe1e",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.2/rog-z13-power-management-1.1.2.tar.gz",
+    artifact_sha256="735770e72cb89183134f7516c3620e6e70ffd116197ea6b159dc45ac1f96805c",
     executable=False,
     path="/usr/share/z13-power-management/z13_power_common.py",
 )
 PIN_Z13_THEME = Pin(
     name="z13_power_theme.py",
     rel=("share", "z13-power-management", "z13_power_theme.py"),
-    sha256="3c476b2c1fa56be4bd245249ce3072784b07be26a006fa84daf31d7686b28959",
+    sha256="eae0b1f2f540423097ea65e40501441c666073c7f603528a474018cb28892a9a",
     version_exact=None,
-    tag="v1.1.1",
-    commit="459e77dfc0133cb1ae1a6c023eb52a6d148d7297",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.1/rog-z13-power-management-1.1.1.tar.gz",
-    artifact_sha256="1a784787464a5f4b82a3dbf3848d393407cea7fb58ef301a8a58e9f0fbaf6ee9",
+    tag="v1.1.2",
+    commit="2ecec501a1dcec83de420cda7a4b30b45129fe1e",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.2/rog-z13-power-management-1.1.2.tar.gz",
+    artifact_sha256="735770e72cb89183134f7516c3620e6e70ffd116197ea6b159dc45ac1f96805c",
     executable=False,
     path="/usr/share/z13-power-management/z13_power_theme.py",
 )
+PIN_Z13_IO = Pin(
+    name="z13_power_io.py",
+    rel=("share", "z13-power-management", "z13_power_io.py"),
+    sha256="887f5c20857a0963035f2bf865943d978b433efd7c9bd7f1fb76811c90885766",
+    version_exact=None,
+    tag="v1.1.2",
+    commit="2ecec501a1dcec83de420cda7a4b30b45129fe1e",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.2/rog-z13-power-management-1.1.2.tar.gz",
+    artifact_sha256="735770e72cb89183134f7516c3620e6e70ffd116197ea6b159dc45ac1f96805c",
+    executable=False,
+    path="/usr/share/z13-power-management/z13_power_io.py",
+)
 
-BACKEND_PINS = (PIN_Z13CTL, PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME)
-SETTINGS_PINS = (PIN_Z13CTL, PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME)
+BACKEND_PINS = (PIN_Z13CTL, PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME, PIN_Z13_IO)
+SETTINGS_PINS = (PIN_Z13CTL, PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME, PIN_Z13_IO)
 
 ENV_KEEP = (
     "HOME",
