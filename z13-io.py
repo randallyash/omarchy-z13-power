@@ -47,6 +47,8 @@ class Pin:
     commit: str
     artifact_url: str
     artifact_sha256: str
+    executable: bool = True
+    path: str = ""
 
 
 # Exact supported backends. Ranges (1.1.0+, 1.3.2+) are rejected.
@@ -59,27 +61,106 @@ PIN_Z13CTL = Pin(
     commit="2d794eadf28716e6acbc59df8275f08bea3a10c9",
     artifact_url="https://github.com/dahui/z13ctl/releases/download/v1.3.2/z13ctl_1.3.2_linux_amd64.tar.gz",
     artifact_sha256="95448e095673d38c507e0910ec9fb6ae9ea738eeb8beff691af12b74f548df94",
+    path="/usr/bin/z13ctl",
 )
 PIN_Z13_POWER = Pin(
     name="z13-power",
     rel=("share", "z13-power-management", "z13-power"),
-    sha256="d6eb278f17db34d70560e75bc5e2e28260465a18dbd3a731a4c1de206030505b",
-    version_exact="z13-power 1.1.0",
-    tag="v1.1.0",
-    commit="9bf5041e2786fe0e42a65c5f0feed6419fa57bf5",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.0/rog-z13-power-management-1.1.0.tar.gz",
-    artifact_sha256="4a1556562f6c707ff50e00fb05c6b3a5cc3eaeac8779f80a9c5a9051fcb21d6b",
+    sha256="14194c983032382f265dc8df2e9bcda814d7354c66c7a4048025afcdff1b9d68",
+    version_exact="z13-power 1.1.1",
+    tag="v1.1.1",
+    commit="459e77dfc0133cb1ae1a6c023eb52a6d148d7297",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.1/rog-z13-power-management-1.1.1.tar.gz",
+    artifact_sha256="1a784787464a5f4b82a3dbf3848d393407cea7fb58ef301a8a58e9f0fbaf6ee9",
+    path="/usr/share/z13-power-management/z13-power",
 )
 PIN_Z13_SETTINGS = Pin(
     name="z13-power-settings",
     rel=("share", "z13-power-management", "z13-power-settings"),
-    sha256="6cdbbd6338b1dfdd056b8edf98a81adadf30f41ad6afe75c0b6aaf16bd3db0cf",
+    sha256="6f70f9d2e2a9ee14770793bce08b0e95ddd6b240f100063a98578798961f23e0",
     version_exact=None,
-    tag="v1.1.0",
-    commit="9bf5041e2786fe0e42a65c5f0feed6419fa57bf5",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.0/rog-z13-power-management-1.1.0.tar.gz",
-    artifact_sha256="4a1556562f6c707ff50e00fb05c6b3a5cc3eaeac8779f80a9c5a9051fcb21d6b",
+    tag="v1.1.1",
+    commit="459e77dfc0133cb1ae1a6c023eb52a6d148d7297",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.1/rog-z13-power-management-1.1.1.tar.gz",
+    artifact_sha256="1a784787464a5f4b82a3dbf3848d393407cea7fb58ef301a8a58e9f0fbaf6ee9",
+    path="/usr/share/z13-power-management/z13-power-settings",
 )
+PIN_Z13_COMMON = Pin(
+    name="z13_power_common.py",
+    rel=("share", "z13-power-management", "z13_power_common.py"),
+    sha256="5a0823d39ac43719c12c5ec73f11e75d1ffbf4e0311c7e24ae7e9d64b97b23d5",
+    version_exact=None,
+    tag="v1.1.1",
+    commit="459e77dfc0133cb1ae1a6c023eb52a6d148d7297",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.1/rog-z13-power-management-1.1.1.tar.gz",
+    artifact_sha256="1a784787464a5f4b82a3dbf3848d393407cea7fb58ef301a8a58e9f0fbaf6ee9",
+    executable=False,
+    path="/usr/share/z13-power-management/z13_power_common.py",
+)
+PIN_Z13_THEME = Pin(
+    name="z13_power_theme.py",
+    rel=("share", "z13-power-management", "z13_power_theme.py"),
+    sha256="3c476b2c1fa56be4bd245249ce3072784b07be26a006fa84daf31d7686b28959",
+    version_exact=None,
+    tag="v1.1.1",
+    commit="459e77dfc0133cb1ae1a6c023eb52a6d148d7297",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.1/rog-z13-power-management-1.1.1.tar.gz",
+    artifact_sha256="1a784787464a5f4b82a3dbf3848d393407cea7fb58ef301a8a58e9f0fbaf6ee9",
+    executable=False,
+    path="/usr/share/z13-power-management/z13_power_theme.py",
+)
+
+BACKEND_PINS = (PIN_Z13CTL, PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME)
+SETTINGS_PINS = (PIN_Z13CTL, PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME)
+
+ENV_KEEP = (
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LC_MESSAGES",
+    "LC_TIME",
+    "TZ",
+    "TERM",
+    "DISPLAY",
+    "WAYLAND_DISPLAY",
+    "XAUTHORITY",
+    "XDG_RUNTIME_DIR",
+    "XDG_SESSION_TYPE",
+    "XDG_CURRENT_DESKTOP",
+    "XDG_CONFIG_HOME",
+    "XDG_STATE_HOME",
+    "XDG_CACHE_HOME",
+    "XDG_DATA_HOME",
+    "DBUS_SESSION_BUS_ADDRESS",
+    "HYPRLAND_INSTANCE_SIGNATURE",
+    "QT_QPA_PLATFORM",
+    "QT_QPA_PLATFORMTHEME",
+    "QT_STYLE_OVERRIDE",
+    "OMARCHY_PATH",
+)
+
+
+def trusted_env() -> dict[str, str]:
+    """Minimal env: PATH cannot reach user locations; Python cannot import them."""
+    env: dict[str, str] = {}
+    for key in ENV_KEEP:
+        val = os.environ.get(key)
+        if val:
+            env[key] = val
+    env["PATH"] = "/usr/bin"
+    env["IFS"] = " \t\n"
+    env["PYTHONNOUSERSITE"] = "1"
+    env["PYTHONSAFEPATH"] = "1"
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONPATH"] = "/usr/share/z13-power-management"
+    env["Z13CTL"] = "/usr/bin/z13ctl"
+    env["XDG_DATA_DIRS"] = os.environ.get("XDG_DATA_DIRS") or "/usr/share"
+    env["XDG_CONFIG_DIRS"] = os.environ.get("XDG_CONFIG_DIRS") or "/etc/xdg"
+    return env
 
 OMARCHY_BIN = {
     "omarchy-battery-status": ("bin", "omarchy-battery-status"),
@@ -154,15 +235,19 @@ def _check_dir(st: os.stat_result, *, owner: int | None) -> None:
         fail("directory is group- or world-writable")
 
 
-def _check_reg_exec(st: os.stat_result) -> None:
+def _check_reg_trusted(st: os.stat_result, *, executable: bool) -> None:
     if not stat.S_ISREG(st.st_mode):
         fail("not a regular file")
     if st.st_uid != 0:
-        fail("binary is not root-owned")
+        fail("file is not root-owned")
     if st.st_mode & UNTRUSTED_WRITE:
-        fail("binary is group- or world-writable")
-    if st.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) == 0:
+        fail("file is group- or world-writable")
+    if executable and st.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) == 0:
         fail("binary is not executable")
+
+
+def _check_reg_exec(st: os.stat_result) -> None:
+    _check_reg_trusted(st, executable=True)
 
 
 def openat_dir(parent_fd: int, name: str, *, owner: int | None, create: bool = False, mode: int = 0o700) -> int:
@@ -390,7 +475,7 @@ def cmd_write_command(payload: str) -> None:
         os.close(dirfd)
 
 
-def open_usr_file(rel: tuple[str, ...]) -> int:
+def open_usr_file(rel: tuple[str, ...], *, executable: bool = True) -> int:
     usr = trusted_usr_fd()
     try:
         *dirs, name = rel
@@ -403,7 +488,7 @@ def open_usr_file(rel: tuple[str, ...]) -> int:
         try:
             fd = openat_file(dirfd, name, os.O_RDONLY)
             st = os.fstat(fd)
-            _check_reg_exec(st)
+            _check_reg_trusted(st, executable=executable)
             return fd
         finally:
             if close_dir:
@@ -492,6 +577,7 @@ def spawn_fd(fd: int, extra_argv: list[str], timeout: float, max_out: int, max_e
         argv,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=trusted_env(),
         start_new_session=True,
         close_fds=True,
         pass_fds=(fd,),
@@ -525,7 +611,7 @@ def sha256_fd(fd: int) -> str:
 
 def open_pinned(pin: Pin) -> int:
     """Open a pinned backend on the /usr exec chain; hash and identity the same fd."""
-    fd = open_usr_file(pin.rel)
+    fd = open_usr_file(pin.rel, executable=pin.executable)
     try:
         got = sha256_fd(fd)
         if got != pin.sha256:
@@ -541,7 +627,7 @@ def open_pinned(pin: Pin) -> int:
                     f"{pin.name} identity mismatch "
                     f"(expected {pin.version_exact!r}, got {identity!r})"
                 )
-        _check_reg_exec(os.fstat(fd))
+        _check_reg_trusted(os.fstat(fd), executable=pin.executable)
         return fd
     except BaseException:
         os.close(fd)
@@ -575,12 +661,15 @@ def cmd_run(argv: list[str], timeout: float, max_bytes: int) -> None:
 
 
 def cmd_spawn_settings() -> None:
-    require_pinned(PIN_Z13CTL)
-    require_pinned(PIN_Z13_POWER)
+    for pin in SETTINGS_PINS:
+        if pin is PIN_Z13_SETTINGS:
+            continue
+        require_pinned(pin)
     fd = open_pinned(PIN_Z13_SETTINGS)
     try:
         clear_cloexec(fd)
         proc_path = f"/proc/self/fd/{fd}"
+        child_env = trusted_env()
         pid = os.fork()
         if pid == 0:
             try:
@@ -589,7 +678,7 @@ def cmd_spawn_settings() -> None:
                 os.dup2(devnull, 0)
                 os.dup2(devnull, 1)
                 os.dup2(devnull, 2)
-                os.execv(proc_path, [proc_path])
+                os.execve(proc_path, [proc_path], child_env)
             except Exception:
                 os._exit(127)
         # Parent returns immediately; the settings window is a long-lived UI.
@@ -693,36 +782,17 @@ def cmd_read_hwmon() -> None:
 
 
 def cmd_check_deps() -> None:
-    require_pinned(PIN_Z13CTL)
-    require_pinned(PIN_Z13_POWER)
-    require_pinned(PIN_Z13_SETTINGS)
-    print(
-        json.dumps(
-            {
-                "z13ctl": {
-                    "version": PIN_Z13CTL.version_exact,
-                    "sha256": PIN_Z13CTL.sha256,
-                    "tag": PIN_Z13CTL.tag,
-                    "commit": PIN_Z13CTL.commit,
-                    "path": "/usr/bin/z13ctl",
-                },
-                "z13-power": {
-                    "version": PIN_Z13_POWER.version_exact,
-                    "sha256": PIN_Z13_POWER.sha256,
-                    "tag": PIN_Z13_POWER.tag,
-                    "commit": PIN_Z13_POWER.commit,
-                    "path": "/usr/share/z13-power-management/z13-power",
-                },
-                "z13-power-settings": {
-                    "sha256": PIN_Z13_SETTINGS.sha256,
-                    "tag": PIN_Z13_SETTINGS.tag,
-                    "commit": PIN_Z13_SETTINGS.commit,
-                    "path": "/usr/share/z13-power-management/z13-power-settings",
-                },
-            },
-            separators=(",", ":"),
-        )
-    )
+    out: dict[str, dict[str, str | None]] = {}
+    for pin in BACKEND_PINS:
+        require_pinned(pin)
+        out[pin.name] = {
+            "version": pin.version_exact,
+            "sha256": pin.sha256,
+            "tag": pin.tag,
+            "commit": pin.commit,
+            "path": pin.path,
+        }
+    print(json.dumps(out, separators=(",", ":")))
 
 
 def main() -> None:
