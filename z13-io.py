@@ -67,34 +67,34 @@ PIN_Z13CTL = Pin(
 PIN_Z13_POWER = Pin(
     name="z13-power",
     rel=("share", "z13-power-management", "z13-power"),
-    sha256="86fbc07ca87cbeaa87185d4899908ac0a807058e4fe1f80d8dc19beb0723d071",
-    version_exact="z13-power 1.1.3",
-    tag="v1.1.3",
-    commit="7bc76cc2fa56c1779244a94946ab5fda239d2fec",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.3/rog-z13-power-management-1.1.3.tar.gz",
-    artifact_sha256="6ad2708902506caaea53887044416f84d7e662c1f42e7ab6eb4d91179008619c",
+    sha256="ce518274d54d4c1b366b2381bd4f48c76d03884e20a8c6bc9aaabc16ab2fc734",
+    version_exact="z13-power 1.1.4",
+    tag="v1.1.4",
+    commit="620a227d0905363bdd17d94e321d51eeb0254940",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz",
+    artifact_sha256="93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5",
     path="/usr/share/z13-power-management/z13-power",
 )
 PIN_Z13_SETTINGS = Pin(
     name="z13-power-settings",
     rel=("share", "z13-power-management", "z13-power-settings"),
-    sha256="d22805c3347e5a816d94a0301431a242db777595c3c1dbdc1e4007cb42699768",
+    sha256="cac5377de48eaa3ae3b30f45327f03971aa9a77d14e14a369fbd25c9fc9bcf92",
     version_exact=None,
-    tag="v1.1.3",
-    commit="7bc76cc2fa56c1779244a94946ab5fda239d2fec",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.3/rog-z13-power-management-1.1.3.tar.gz",
-    artifact_sha256="6ad2708902506caaea53887044416f84d7e662c1f42e7ab6eb4d91179008619c",
+    tag="v1.1.4",
+    commit="620a227d0905363bdd17d94e321d51eeb0254940",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz",
+    artifact_sha256="93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5",
     path="/usr/share/z13-power-management/z13-power-settings",
 )
 PIN_Z13_COMMON = Pin(
     name="z13_power_common.py",
     rel=("share", "z13-power-management", "z13_power_common.py"),
-    sha256="43aeaea43a28bd27b45ab6027a455345767b4874ef8b3f3b2e8090f1e2edc89e",
+    sha256="642961682003749d599597373f906f7312f42cec6bf578d1c23845ca356efa09",
     version_exact=None,
-    tag="v1.1.3",
-    commit="7bc76cc2fa56c1779244a94946ab5fda239d2fec",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.3/rog-z13-power-management-1.1.3.tar.gz",
-    artifact_sha256="6ad2708902506caaea53887044416f84d7e662c1f42e7ab6eb4d91179008619c",
+    tag="v1.1.4",
+    commit="620a227d0905363bdd17d94e321d51eeb0254940",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz",
+    artifact_sha256="93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5",
     executable=False,
     path="/usr/share/z13-power-management/z13_power_common.py",
 )
@@ -103,22 +103,22 @@ PIN_Z13_THEME = Pin(
     rel=("share", "z13-power-management", "z13_power_theme.py"),
     sha256="9152869ab456a0325d6e8bfeacb433b2f352f58ddf1abb18242c7113a6bdc518",
     version_exact=None,
-    tag="v1.1.3",
-    commit="7bc76cc2fa56c1779244a94946ab5fda239d2fec",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.3/rog-z13-power-management-1.1.3.tar.gz",
-    artifact_sha256="6ad2708902506caaea53887044416f84d7e662c1f42e7ab6eb4d91179008619c",
+    tag="v1.1.4",
+    commit="620a227d0905363bdd17d94e321d51eeb0254940",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz",
+    artifact_sha256="93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5",
     executable=False,
     path="/usr/share/z13-power-management/z13_power_theme.py",
 )
 PIN_Z13_IO = Pin(
     name="z13_power_io.py",
     rel=("share", "z13-power-management", "z13_power_io.py"),
-    sha256="0656a72909250aa4fb18c09aa28d80e1ada6f5aa482bc96a5a7de76460002072",
+    sha256="518dc7adc478ddd6b260f2d07077ef44d1a20d2ac3d880a8c4dde4353e31493a",
     version_exact=None,
-    tag="v1.1.3",
-    commit="7bc76cc2fa56c1779244a94946ab5fda239d2fec",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.3/rog-z13-power-management-1.1.3.tar.gz",
-    artifact_sha256="6ad2708902506caaea53887044416f84d7e662c1f42e7ab6eb4d91179008619c",
+    tag="v1.1.4",
+    commit="620a227d0905363bdd17d94e321d51eeb0254940",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz",
+    artifact_sha256="93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5",
     executable=False,
     path="/usr/share/z13-power-management/z13_power_io.py",
 )
@@ -169,7 +169,6 @@ def trusted_env(*, z13ctl_fd: int | None = None) -> dict[str, str]:
     env["PYTHONNOUSERSITE"] = "1"
     env["PYTHONSAFEPATH"] = "1"
     env["PYTHONDONTWRITEBYTECODE"] = "1"
-    env["PYTHONPATH"] = "/usr/share/z13-power-management"
     env["Z13CTL"] = f"/proc/self/fd/{z13ctl_fd}" if z13ctl_fd is not None else "/usr/bin/z13ctl"
     env["XDG_DATA_DIRS"] = os.environ.get("XDG_DATA_DIRS") or "/usr/share"
     env["XDG_CONFIG_DIRS"] = os.environ.get("XDG_CONFIG_DIRS") or "/etc/xdg"
@@ -737,15 +736,26 @@ def cmd_run(argv: list[str], timeout: float, max_bytes: int) -> None:
 
 
 def cmd_spawn_settings() -> None:
-    for pin in SETTINGS_PINS:
-        if pin is PIN_Z13_SETTINGS:
-            continue
-        require_pinned(pin)
-    fd = open_pinned(PIN_Z13_SETTINGS)
+    require_pinned(PIN_Z13_POWER)
+    held: list[int] = []
     try:
-        clear_cloexec(fd)
-        proc_path = f"/proc/self/fd/{fd}"
-        child_env = trusted_env()
+        zctl = open_pinned(PIN_Z13CTL)
+        held.append(zctl)
+        io_fd = open_pinned(PIN_Z13_IO)
+        held.append(io_fd)
+        common_fd = open_pinned(PIN_Z13_COMMON)
+        held.append(common_fd)
+        theme_fd = open_pinned(PIN_Z13_THEME)
+        held.append(theme_fd)
+        settings_fd = open_pinned(PIN_Z13_SETTINGS)
+        held.append(settings_fd)
+        for fd in held:
+            clear_cloexec(fd)
+        child_env = trusted_env(z13ctl_fd=zctl)
+        child_env["Z13_MOD_IO"] = f"/proc/self/fd/{io_fd}"
+        child_env["Z13_MOD_COMMON"] = f"/proc/self/fd/{common_fd}"
+        child_env["Z13_MOD_THEME"] = f"/proc/self/fd/{theme_fd}"
+        proc_path = f"/proc/self/fd/{settings_fd}"
         pid = os.fork()
         if pid == 0:
             try:
@@ -759,7 +769,11 @@ def cmd_spawn_settings() -> None:
                 os._exit(127)
         # Parent returns immediately; the settings window is a long-lived UI.
     finally:
-        os.close(fd)
+        for fd in held:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
 
 
 def cmd_read_hwmon() -> None:
