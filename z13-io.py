@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """Bounded, descriptor-relative I/O for the Z13 Power Omarchy plugin.
 
 Every file and child process used by the persistent shell goes through this
@@ -9,6 +9,7 @@ operations use dir_fd / /proc/self/fd.
 from __future__ import annotations
 
 import argparse
+import errno
 import fcntl
 import hashlib
 import json
@@ -66,58 +67,58 @@ PIN_Z13CTL = Pin(
 PIN_Z13_POWER = Pin(
     name="z13-power",
     rel=("share", "z13-power-management", "z13-power"),
-    sha256="60f63e2391492bf689de82e6974427468555564333824bbc75c6da416d1c87ca",
-    version_exact="z13-power 1.1.2",
-    tag="v1.1.2",
-    commit="2ecec501a1dcec83de420cda7a4b30b45129fe1e",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.2/rog-z13-power-management-1.1.2.tar.gz",
-    artifact_sha256="735770e72cb89183134f7516c3620e6e70ffd116197ea6b159dc45ac1f96805c",
+    sha256="86fbc07ca87cbeaa87185d4899908ac0a807058e4fe1f80d8dc19beb0723d071",
+    version_exact="z13-power 1.1.3",
+    tag="v1.1.3",
+    commit="7bc76cc2fa56c1779244a94946ab5fda239d2fec",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.3/rog-z13-power-management-1.1.3.tar.gz",
+    artifact_sha256="6ad2708902506caaea53887044416f84d7e662c1f42e7ab6eb4d91179008619c",
     path="/usr/share/z13-power-management/z13-power",
 )
 PIN_Z13_SETTINGS = Pin(
     name="z13-power-settings",
     rel=("share", "z13-power-management", "z13-power-settings"),
-    sha256="2dac65348f0093f03a103f27976af902cdd3074619421f0d88b8d3f70bc708ad",
+    sha256="d22805c3347e5a816d94a0301431a242db777595c3c1dbdc1e4007cb42699768",
     version_exact=None,
-    tag="v1.1.2",
-    commit="2ecec501a1dcec83de420cda7a4b30b45129fe1e",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.2/rog-z13-power-management-1.1.2.tar.gz",
-    artifact_sha256="735770e72cb89183134f7516c3620e6e70ffd116197ea6b159dc45ac1f96805c",
+    tag="v1.1.3",
+    commit="7bc76cc2fa56c1779244a94946ab5fda239d2fec",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.3/rog-z13-power-management-1.1.3.tar.gz",
+    artifact_sha256="6ad2708902506caaea53887044416f84d7e662c1f42e7ab6eb4d91179008619c",
     path="/usr/share/z13-power-management/z13-power-settings",
 )
 PIN_Z13_COMMON = Pin(
     name="z13_power_common.py",
     rel=("share", "z13-power-management", "z13_power_common.py"),
-    sha256="fa52d53b2c81505df40f0ed4738ff67baf953b73f5314fbc267b54f7a4120963",
+    sha256="43aeaea43a28bd27b45ab6027a455345767b4874ef8b3f3b2e8090f1e2edc89e",
     version_exact=None,
-    tag="v1.1.2",
-    commit="2ecec501a1dcec83de420cda7a4b30b45129fe1e",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.2/rog-z13-power-management-1.1.2.tar.gz",
-    artifact_sha256="735770e72cb89183134f7516c3620e6e70ffd116197ea6b159dc45ac1f96805c",
+    tag="v1.1.3",
+    commit="7bc76cc2fa56c1779244a94946ab5fda239d2fec",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.3/rog-z13-power-management-1.1.3.tar.gz",
+    artifact_sha256="6ad2708902506caaea53887044416f84d7e662c1f42e7ab6eb4d91179008619c",
     executable=False,
     path="/usr/share/z13-power-management/z13_power_common.py",
 )
 PIN_Z13_THEME = Pin(
     name="z13_power_theme.py",
     rel=("share", "z13-power-management", "z13_power_theme.py"),
-    sha256="eae0b1f2f540423097ea65e40501441c666073c7f603528a474018cb28892a9a",
+    sha256="9152869ab456a0325d6e8bfeacb433b2f352f58ddf1abb18242c7113a6bdc518",
     version_exact=None,
-    tag="v1.1.2",
-    commit="2ecec501a1dcec83de420cda7a4b30b45129fe1e",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.2/rog-z13-power-management-1.1.2.tar.gz",
-    artifact_sha256="735770e72cb89183134f7516c3620e6e70ffd116197ea6b159dc45ac1f96805c",
+    tag="v1.1.3",
+    commit="7bc76cc2fa56c1779244a94946ab5fda239d2fec",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.3/rog-z13-power-management-1.1.3.tar.gz",
+    artifact_sha256="6ad2708902506caaea53887044416f84d7e662c1f42e7ab6eb4d91179008619c",
     executable=False,
     path="/usr/share/z13-power-management/z13_power_theme.py",
 )
 PIN_Z13_IO = Pin(
     name="z13_power_io.py",
     rel=("share", "z13-power-management", "z13_power_io.py"),
-    sha256="887f5c20857a0963035f2bf865943d978b433efd7c9bd7f1fb76811c90885766",
+    sha256="0656a72909250aa4fb18c09aa28d80e1ada6f5aa482bc96a5a7de76460002072",
     version_exact=None,
-    tag="v1.1.2",
-    commit="2ecec501a1dcec83de420cda7a4b30b45129fe1e",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.2/rog-z13-power-management-1.1.2.tar.gz",
-    artifact_sha256="735770e72cb89183134f7516c3620e6e70ffd116197ea6b159dc45ac1f96805c",
+    tag="v1.1.3",
+    commit="7bc76cc2fa56c1779244a94946ab5fda239d2fec",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.3/rog-z13-power-management-1.1.3.tar.gz",
+    artifact_sha256="6ad2708902506caaea53887044416f84d7e662c1f42e7ab6eb4d91179008619c",
     executable=False,
     path="/usr/share/z13-power-management/z13_power_io.py",
 )
@@ -156,7 +157,7 @@ ENV_KEEP = (
 )
 
 
-def trusted_env() -> dict[str, str]:
+def trusted_env(*, z13ctl_fd: int | None = None) -> dict[str, str]:
     """Minimal env: PATH cannot reach user locations; Python cannot import them."""
     env: dict[str, str] = {}
     for key in ENV_KEEP:
@@ -169,7 +170,7 @@ def trusted_env() -> dict[str, str]:
     env["PYTHONSAFEPATH"] = "1"
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     env["PYTHONPATH"] = "/usr/share/z13-power-management"
-    env["Z13CTL"] = "/usr/bin/z13ctl"
+    env["Z13CTL"] = f"/proc/self/fd/{z13ctl_fd}" if z13ctl_fd is not None else "/usr/bin/z13ctl"
     env["XDG_DATA_DIRS"] = os.environ.get("XDG_DATA_DIRS") or "/usr/share"
     env["XDG_CONFIG_DIRS"] = os.environ.get("XDG_CONFIG_DIRS") or "/etc/xdg"
     return env
@@ -487,18 +488,41 @@ def cmd_write_command(payload: str) -> None:
         os.close(dirfd)
 
 
-def open_usr_file(rel: tuple[str, ...], *, executable: bool = True) -> int:
+def _open_same_dir_symlink(dirfd: int, name: str) -> int:
+    """Follow one same-directory symlink (e.g. /usr/bin/python3 -> python3.14)."""
+    try:
+        target = os.readlink(name, dir_fd=dirfd)
+    except OSError:
+        fail("cannot read symlink")
+    if target in ("", ".", "..") or "/" in target or "\x00" in target:
+        fail("symlink target not a same-directory name")
+    fd = os.open(target, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=dirfd)
+    try:
+        st = os.fstat(fd)
+        if not stat.S_ISREG(st.st_mode):
+            fail("symlink target is not a regular file")
+        return fd
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def open_usr_file(rel: tuple[str, ...], *, executable: bool = True, allow_same_dir_symlink: bool = False) -> int:
     usr = trusted_usr_fd()
     try:
         *dirs, name = rel
         dirfd = usr
         close_dir = False
         if dirs:
-            # first component after /usr
             dirfd = walk_dirs(usr, list(dirs), owner=0)
             close_dir = True
         try:
-            fd = openat_file(dirfd, name, os.O_RDONLY)
+            try:
+                fd = openat_file(dirfd, name, os.O_RDONLY)
+            except OSError as e:
+                if not allow_same_dir_symlink or e.errno != errno.ELOOP:
+                    raise
+                fd = _open_same_dir_symlink(dirfd, name)
             st = os.fstat(fd)
             _check_reg_trusted(st, executable=executable)
             return fd
@@ -507,6 +531,27 @@ def open_usr_file(rel: tuple[str, ...], *, executable: bool = True) -> int:
                 os.close(dirfd)
     finally:
         os.close(usr)
+
+
+def require_interpreter() -> None:
+    """Refuse to run if this process is not the trusted /usr/bin/python3."""
+    fd = open_usr_file(("bin", "python3"), executable=True, allow_same_dir_symlink=True)
+    try:
+        want = os.fstat(fd)
+        try:
+            exe = os.open(os.path.realpath(sys.executable), os.O_RDONLY | os.O_CLOEXEC)
+        except OSError:
+            fail("cannot open current interpreter")
+        try:
+            got = os.fstat(exe)
+        finally:
+            os.close(exe)
+        if (want.st_dev, want.st_ino) != (got.st_dev, got.st_ino):
+            fail("interpreter is not trusted /usr/bin/python3")
+        if want.st_uid != 0 or want.st_mode & UNTRUSTED_WRITE:
+            fail("interpreter ownership/mode rejected")
+    finally:
+        os.close(fd)
 
 
 def clear_cloexec(fd: int) -> None:
@@ -581,18 +626,29 @@ def bounded_collect(proc: subprocess.Popen, timeout: float, max_out: int, max_er
                 return bytes(out), bytes(err), rc
 
 
-def spawn_fd(fd: int, extra_argv: list[str], timeout: float, max_out: int, max_err: int) -> tuple[bytes, int]:
+def spawn_fd(
+    fd: int,
+    extra_argv: list[str],
+    timeout: float,
+    max_out: int,
+    max_err: int,
+    *,
+    extra_fds: tuple[int, ...] = (),
+) -> tuple[bytes, int]:
     clear_cloexec(fd)
+    for extra in extra_fds:
+        clear_cloexec(extra)
     proc_path = f"/proc/self/fd/{fd}"
     argv = [proc_path, *extra_argv]
+    zctl = extra_fds[0] if extra_fds else None
     proc = subprocess.Popen(
         argv,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        env=trusted_env(),
+        env=trusted_env(z13ctl_fd=zctl),
         start_new_session=True,
         close_fds=True,
-        pass_fds=(fd,),
+        pass_fds=(fd, *extra_fds),
     )
     try:
         out, _err, rc = bounded_collect(proc, timeout, max_out, max_err)
@@ -658,15 +714,23 @@ def cmd_run(argv: list[str], timeout: float, max_bytes: int) -> None:
     extra = argv[1:]
     if name in OMARCHY_BIN:
         fd = open_usr_file(OMARCHY_BIN[name])
+        extra_fds: tuple[int, ...] = ()
     elif name == "z13-power":
-        require_pinned(PIN_Z13CTL)
-        fd = open_pinned(PIN_Z13_POWER)
+        zctl = open_pinned(PIN_Z13CTL)
+        try:
+            fd = open_pinned(PIN_Z13_POWER)
+        except BaseException:
+            os.close(zctl)
+            raise
+        extra_fds = (zctl,)
     else:
         fail(f"command not allowed: {name}")
     try:
-        out, rc = spawn_fd(fd, extra, timeout, max_bytes, MAX_ERR_BYTES)
+        out, rc = spawn_fd(fd, extra, timeout, max_bytes, MAX_ERR_BYTES, extra_fds=extra_fds)
     finally:
         os.close(fd)
+        for extra in extra_fds:
+            os.close(extra)
     sys.stdout.buffer.write(out)
     if rc not in (0, None):
         raise SystemExit(rc)
@@ -808,6 +872,7 @@ def cmd_check_deps() -> None:
 
 
 def main() -> None:
+    require_interpreter()
     parser = argparse.ArgumentParser(prog="z13-io")
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("read-status")

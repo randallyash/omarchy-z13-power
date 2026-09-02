@@ -37,7 +37,7 @@ Item {
   readonly property string ioScript: String(Qt.resolvedUrl("z13-io.py")).replace(/^file:\/\//, "")
 
   function ioCmd() {
-    var a = ["python3", root.ioScript]
+    var a = ["/usr/bin/python3", root.ioScript]
     for (var i = 0; i < arguments.length; i++) a.push(arguments[i])
     return a
   }
