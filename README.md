@@ -10,10 +10,55 @@ This is a `bar-widget` with a nested details panel (same shape as stock
 [z13-power](https://github.com/randallyash/rog-z13-power-management); without
 that backend the glyph still shows charge, and the pills will not drive TDP.
 
-## Install
+## Pinned backends
 
-1. Install **z13-power** and **z13ctl-bin** from the table above (GZ302 only).
-2. Then add this widget:
+This plugin executes only the exact artifacts below. `z13-io.py` hashes the
+held file descriptor and requires that exact identity; ranges such as
+`1.1.0+` / `1.3.2+` are rejected. Install from these release URLs. Do not
+install from `main`, from `z13-power-git`, or from an unverified clone.
+
+| Dependency | Tag / commit | Release artifact | Installed path + digest | Runtime identity |
+|---|---|---|---|---|
+| **z13ctl** | `v1.3.2` (`2d794eadf28716e6acbc59df8275f08bea3a10c9`) | [z13ctl_1.3.2_linux_amd64.tar.gz](https://github.com/dahui/z13ctl/releases/download/v1.3.2/z13ctl_1.3.2_linux_amd64.tar.gz) `sha256:95448e095673d38c507e0910ec9fb6ae9ea738eeb8beff691af12b74f548df94` | `/usr/bin/z13ctl` `sha256:3e49f796e6eec2021ce4716f57c19f5f65f43f76408cb56a6454f88147f5f4d6` | `z13ctl version 1.3.2` |
+| **z13-power** | `v1.1.0` (`9bf5041e2786fe0e42a65c5f0feed6419fa57bf5`) | [rog-z13-power-management-1.1.0.tar.gz](https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.0/rog-z13-power-management-1.1.0.tar.gz) `sha256:4a1556562f6c707ff50e00fb05c6b3a5cc3eaeac8779f80a9c5a9051fcb21d6b` | `/usr/share/z13-power-management/z13-power` `sha256:d6eb278f17db34d70560e75bc5e2e28260465a18dbd3a731a4c1de206030505b` | `z13-power 1.1.0` |
+| **z13-power-settings** | same `v1.1.0` tree | same tarball as z13-power | `/usr/share/z13-power-management/z13-power-settings` `sha256:6cdbbd6338b1dfdd056b8edf98a81adadf30f41ad6afe75c0b6aaf16bd3db0cf` | file digest (no `--version`) |
+
+Provenance: [dahui/z13ctl v1.3.2](https://github.com/dahui/z13ctl/releases/tag/v1.3.2) (annotated, signed tag; `checksums.txt` on the release matches the tarball digest) and [randallyash/rog-z13-power-management v1.1.0](https://github.com/randallyash/rog-z13-power-management/releases/tag/v1.1.0) (`SHA256SUMS` on the release; GitHub asset digest matches the tarball). A rebuilt or debug-split binary will not match and is refused.
+
+### Install the pinned files
+
+```sh
+# z13ctl v1.3.2 → /usr/bin/z13ctl
+curl -L -O https://github.com/dahui/z13ctl/releases/download/v1.3.2/z13ctl_1.3.2_linux_amd64.tar.gz
+echo '95448e095673d38c507e0910ec9fb6ae9ea738eeb8beff691af12b74f548df94  z13ctl_1.3.2_linux_amd64.tar.gz' | sha256sum -c
+tar -xzf z13ctl_1.3.2_linux_amd64.tar.gz z13ctl
+sudo install -Dm755 z13ctl /usr/bin/z13ctl
+echo '3e49f796e6eec2021ce4716f57c19f5f65f43f76408cb56a6454f88147f5f4d6  /usr/bin/z13ctl' | sha256sum -c
+
+# z13-power v1.1.0 → /usr/share/z13-power-management/
+curl -L -O https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.0/rog-z13-power-management-1.1.0.tar.gz
+echo '4a1556562f6c707ff50e00fb05c6b3a5cc3eaeac8779f80a9c5a9051fcb21d6b  rog-z13-power-management-1.1.0.tar.gz' | sha256sum -c
+tar -xzf rog-z13-power-management-1.1.0.tar.gz
+sudo install -Dm755 rog-z13-power-management-1.1.0/scripts/z13-power \
+  /usr/share/z13-power-management/z13-power
+sudo install -Dm755 rog-z13-power-management-1.1.0/service/z13-power-settings \
+  /usr/share/z13-power-management/z13-power-settings
+sudo install -Dm644 rog-z13-power-management-1.1.0/service/z13_power_common.py \
+  /usr/share/z13-power-management/z13_power_common.py
+sudo install -Dm644 rog-z13-power-management-1.1.0/service/z13_power_theme.py \
+  /usr/share/z13-power-management/z13_power_theme.py
+echo 'd6eb278f17db34d70560e75bc5e2e28260465a18dbd3a731a4c1de206030505b  /usr/share/z13-power-management/z13-power' | sha256sum -c
+echo '6cdbbd6338b1dfdd056b8edf98a81adadf30f41ad6afe75c0b6aaf16bd3db0cf  /usr/share/z13-power-management/z13-power-settings' | sha256sum -c
+```
+
+Those four files are the ones this plugin runs or that the settings window
+imports. Remaining files in the same v1.1.0 tarball (service, udev, license)
+may be installed from that tree into the same prefix; they must not come from
+a different commit.
+
+## Install the plugin
+
+GZ302 only. Backends first, then:
 
 ```sh
 omarchy plugin add https://github.com/randallyash/omarchy-z13-power.git --enable
@@ -37,15 +82,19 @@ omarchy bar move io.github.randallyash.z13-power --section right
 ```
 
 This is a **manual-setup** plugin. `omarchy plugin add` only installs the
-bar widget. Profile apply, TDP, and charge cap come from a separately
-installed backend:
+bar widget. Profile apply, TDP, and charge cap come from the pinned backend
+above.
 
-| Dependency | Reviewable version | Provenance | Install |
-|---|---|---|---|
-| **z13-power** | **1.1.0+** (`z13-power --version`) | https://github.com/randallyash/rog-z13-power-management (GPL-3.0-or-later), packaged as `z13-power-git` | clone that repo, then `cd packaging/arch/z13-power-git && makepkg -si`, or `./install.sh` |
-| **z13ctl-bin** | **1.3.2+** (`z13ctl --version`) | https://github.com/dahui/z13ctl, AUR `z13ctl-bin` | install via the AUR helper of your choice |
+Runtime enforcement in `z13-io.py`:
 
-Runtime enforcement: `z13-io.py` executes only root-owned files under `/usr/share/z13-power-management/` and `/usr/bin/` (never `~/.local/bin`), via a held file descriptor (`/proc/self/fd/N`), and refuses to run `z13-power diagnose` unless both version gates pass. It never downloads packages.
+- Executes only root-owned regular files under `/usr` (never `~/.local/bin`),
+  via a held file descriptor (`/proc/self/fd/N`).
+- Rejects `S_IWGRP` and `S_IWOTH` on `/usr` itself, every path component, and
+  the executable.
+- Requires the exact pinned sha256 and `--version` identity on the same fd
+  before `z13-power` runs, and applies that same gate before
+  `spawn-settings`.
+- Never downloads packages.
 
 ## Remove
 

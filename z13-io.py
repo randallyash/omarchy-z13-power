@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import hashlib
 import json
 import os
 import pwd
@@ -20,20 +21,66 @@ import stat
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
 
 MAX_FILE_BYTES = 16 * 1024
 MAX_PROC_BYTES = 32 * 1024
 MAX_ERR_BYTES = 8 * 1024
 MAX_COMMAND_BYTES = 2048
 MAX_STATUS_STRING = 64
+MAX_EXEC_BYTES = 16 * 1024 * 1024
 DEFAULT_TIMEOUT = 3.0
 DIAGNOSE_TIMEOUT = 8.0
 
-Z13CTL_MIN = (1, 3, 2)
-Z13_POWER_MIN = (1, 1, 0)
-Z13CTL_PATH = ("bin", "z13ctl")
-Z13_POWER_PATH = ("share", "z13-power-management", "z13-power")
-Z13_SETTINGS_PATH = ("share", "z13-power-management", "z13-power-settings")
+# Group- or world-writable path components are not a trusted exec chain,
+# even when root-owned (the caller may be in that group).
+UNTRUSTED_WRITE = stat.S_IWGRP | stat.S_IWOTH
+
+
+@dataclass(frozen=True)
+class Pin:
+    name: str
+    rel: tuple[str, ...]
+    sha256: str
+    version_exact: str | None
+    tag: str
+    commit: str
+    artifact_url: str
+    artifact_sha256: str
+
+
+# Exact supported backends. Ranges (1.1.0+, 1.3.2+) are rejected.
+PIN_Z13CTL = Pin(
+    name="z13ctl",
+    rel=("bin", "z13ctl"),
+    sha256="3e49f796e6eec2021ce4716f57c19f5f65f43f76408cb56a6454f88147f5f4d6",
+    version_exact="z13ctl version 1.3.2",
+    tag="v1.3.2",
+    commit="2d794eadf28716e6acbc59df8275f08bea3a10c9",
+    artifact_url="https://github.com/dahui/z13ctl/releases/download/v1.3.2/z13ctl_1.3.2_linux_amd64.tar.gz",
+    artifact_sha256="95448e095673d38c507e0910ec9fb6ae9ea738eeb8beff691af12b74f548df94",
+)
+PIN_Z13_POWER = Pin(
+    name="z13-power",
+    rel=("share", "z13-power-management", "z13-power"),
+    sha256="d6eb278f17db34d70560e75bc5e2e28260465a18dbd3a731a4c1de206030505b",
+    version_exact="z13-power 1.1.0",
+    tag="v1.1.0",
+    commit="9bf5041e2786fe0e42a65c5f0feed6419fa57bf5",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.0/rog-z13-power-management-1.1.0.tar.gz",
+    artifact_sha256="4a1556562f6c707ff50e00fb05c6b3a5cc3eaeac8779f80a9c5a9051fcb21d6b",
+)
+PIN_Z13_SETTINGS = Pin(
+    name="z13-power-settings",
+    rel=("share", "z13-power-management", "z13-power-settings"),
+    sha256="6cdbbd6338b1dfdd056b8edf98a81adadf30f41ad6afe75c0b6aaf16bd3db0cf",
+    version_exact=None,
+    tag="v1.1.0",
+    commit="9bf5041e2786fe0e42a65c5f0feed6419fa57bf5",
+    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.0/rog-z13-power-management-1.1.0.tar.gz",
+    artifact_sha256="4a1556562f6c707ff50e00fb05c6b3a5cc3eaeac8779f80a9c5a9051fcb21d6b",
+)
+
 OMARCHY_BIN = {
     "omarchy-battery-status": ("bin", "omarchy-battery-status"),
     "omarchy-powerprofiles-list": ("bin", "omarchy-powerprofiles-list"),
@@ -77,6 +124,8 @@ def open_anchor(path: str, *, owner: int | None) -> int:
             fail(f"anchor is not a directory: {path}")
         if owner is not None and st.st_uid != owner:
             fail(f"anchor not owned as required: {path}")
+        if st.st_mode & UNTRUSTED_WRITE:
+            fail(f"anchor is group- or world-writable: {path}")
         return fd
     except Exception:
         os.close(fd)
@@ -101,8 +150,8 @@ def _check_dir(st: os.stat_result, *, owner: int | None) -> None:
         fail("path component is not a directory")
     if owner is not None and st.st_uid != owner:
         fail("directory owner mismatch")
-    if st.st_mode & stat.S_IWOTH and not (st.st_mode & stat.S_ISVTX):
-        fail("world-writable directory")
+    if st.st_mode & UNTRUSTED_WRITE:
+        fail("directory is group- or world-writable")
 
 
 def _check_reg_exec(st: os.stat_result) -> None:
@@ -110,8 +159,8 @@ def _check_reg_exec(st: os.stat_result) -> None:
         fail("not a regular file")
     if st.st_uid != 0:
         fail("binary is not root-owned")
-    if st.st_mode & stat.S_IWOTH:
-        fail("binary is world-writable")
+    if st.st_mode & UNTRUSTED_WRITE:
+        fail("binary is group- or world-writable")
     if st.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) == 0:
         fail("binary is not executable")
 
@@ -455,41 +504,53 @@ def spawn_fd(fd: int, extra_argv: list[str], timeout: float, max_out: int, max_e
             kill_group(proc)
 
 
-def parse_semver(text: str) -> tuple[int, int, int] | None:
-    m = re.search(r"(\d+)\.(\d+)\.(\d+)", text)
-    if not m:
-        return None
-    return int(m.group(1)), int(m.group(2)), int(m.group(3))
+def sha256_fd(fd: int) -> str:
+    st = os.fstat(fd)
+    if st.st_size > MAX_EXEC_BYTES:
+        fail("binary too large")
+    digest = hashlib.sha256()
+    os.lseek(fd, 0, os.SEEK_SET)
+    total = 0
+    while True:
+        chunk = os.read(fd, 65536)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > MAX_EXEC_BYTES:
+            fail("binary too large")
+        digest.update(chunk)
+    os.lseek(fd, 0, os.SEEK_SET)
+    return digest.hexdigest()
 
 
-def require_z13ctl() -> None:
-    fd = open_usr_file(Z13CTL_PATH)
+def open_pinned(pin: Pin) -> int:
+    """Open a pinned backend on the /usr exec chain; hash and identity the same fd."""
+    fd = open_usr_file(pin.rel)
     try:
-        out, rc = spawn_fd(fd, ["--version"], 2.0, 256, 256)
-    finally:
+        got = sha256_fd(fd)
+        if got != pin.sha256:
+            fail(
+                f"{pin.name} sha256 mismatch (expected {pin.sha256}, got {got}; "
+                f"install {pin.tag} from {pin.artifact_url})"
+            )
+        if pin.version_exact is not None:
+            out, rc = spawn_fd(fd, ["--version"], 2.0, 256, 256)
+            identity = out.decode("utf-8", "replace").strip()
+            if rc not in (0, None) or identity != pin.version_exact:
+                fail(
+                    f"{pin.name} identity mismatch "
+                    f"(expected {pin.version_exact!r}, got {identity!r})"
+                )
+        _check_reg_exec(os.fstat(fd))
+        return fd
+    except BaseException:
         os.close(fd)
-    ver = parse_semver(out.decode("utf-8", "replace"))
-    if ver is None or ver < Z13CTL_MIN:
-        fail(
-            f"z13ctl-bin {Z13CTL_MIN[0]}.{Z13CTL_MIN[1]}.{Z13CTL_MIN[2]}+ required "
-            f"(https://github.com/dahui/z13ctl, AUR z13ctl-bin); got {out!r}"
-        )
+        raise
 
 
-def require_z13_power() -> None:
-    fd = open_usr_file(Z13_POWER_PATH)
-    try:
-        out, rc = spawn_fd(fd, ["--version"], 2.0, 256, 256)
-    finally:
-        os.close(fd)
-    ver = parse_semver(out.decode("utf-8", "replace"))
-    if ver is None or ver < Z13_POWER_MIN:
-        fail(
-            "z13-power "
-            f"{Z13_POWER_MIN[0]}.{Z13_POWER_MIN[1]}.{Z13_POWER_MIN[2]}+ required "
-            "(https://github.com/randallyash/rog-z13-power-management, "
-            "package z13-power-git); install/upgrade then retry"
-        )
+def require_pinned(pin: Pin) -> None:
+    fd = open_pinned(pin)
+    os.close(fd)
 
 
 def cmd_run(argv: list[str], timeout: float, max_bytes: int) -> None:
@@ -498,12 +559,10 @@ def cmd_run(argv: list[str], timeout: float, max_bytes: int) -> None:
     name = os.path.basename(argv[0])
     extra = argv[1:]
     if name in OMARCHY_BIN:
-        rel = OMARCHY_BIN[name]
-        fd = open_usr_file(rel)
+        fd = open_usr_file(OMARCHY_BIN[name])
     elif name == "z13-power":
-        require_z13ctl()
-        require_z13_power()
-        fd = open_usr_file(Z13_POWER_PATH)
+        require_pinned(PIN_Z13CTL)
+        fd = open_pinned(PIN_Z13_POWER)
     else:
         fail(f"command not allowed: {name}")
     try:
@@ -516,7 +575,9 @@ def cmd_run(argv: list[str], timeout: float, max_bytes: int) -> None:
 
 
 def cmd_spawn_settings() -> None:
-    fd = open_usr_file(Z13_SETTINGS_PATH)
+    require_pinned(PIN_Z13CTL)
+    require_pinned(PIN_Z13_POWER)
+    fd = open_pinned(PIN_Z13_SETTINGS)
     try:
         clear_cloexec(fd)
         proc_path = f"/proc/self/fd/{fd}"
@@ -632,13 +693,32 @@ def cmd_read_hwmon() -> None:
 
 
 def cmd_check_deps() -> None:
-    require_z13ctl()
-    require_z13_power()
+    require_pinned(PIN_Z13CTL)
+    require_pinned(PIN_Z13_POWER)
+    require_pinned(PIN_Z13_SETTINGS)
     print(
         json.dumps(
             {
-                "z13ctl_min": f"{Z13CTL_MIN[0]}.{Z13CTL_MIN[1]}.{Z13CTL_MIN[2]}",
-                "z13_power_min": f"{Z13_POWER_MIN[0]}.{Z13_POWER_MIN[1]}.{Z13_POWER_MIN[2]}",
+                "z13ctl": {
+                    "version": PIN_Z13CTL.version_exact,
+                    "sha256": PIN_Z13CTL.sha256,
+                    "tag": PIN_Z13CTL.tag,
+                    "commit": PIN_Z13CTL.commit,
+                    "path": "/usr/bin/z13ctl",
+                },
+                "z13-power": {
+                    "version": PIN_Z13_POWER.version_exact,
+                    "sha256": PIN_Z13_POWER.sha256,
+                    "tag": PIN_Z13_POWER.tag,
+                    "commit": PIN_Z13_POWER.commit,
+                    "path": "/usr/share/z13-power-management/z13-power",
+                },
+                "z13-power-settings": {
+                    "sha256": PIN_Z13_SETTINGS.sha256,
+                    "tag": PIN_Z13_SETTINGS.tag,
+                    "commit": PIN_Z13_SETTINGS.commit,
+                    "path": "/usr/share/z13-power-management/z13-power-settings",
+                },
             },
             separators=(",", ":"),
         )
