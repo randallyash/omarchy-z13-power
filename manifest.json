@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "io.github.randallyash.z13-power",
   "name": "Z13 Power",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Randall Yash",
   "license": "GPL-3.0-or-later",
-  "description": "ROG Flow Z13 battery flyout: Max / Perf / Mid / Quiet / Low, Automatic, Lock, charge-to-100%, and low-battery warnings.",
+  "description": "GZ302 command center: TDP Max/Perf/Mid/Quiet/Low, live watts and temp, RGB keyboard + lightbar, custom fan curves, Curve Optimizer undervolt with silicon-lottery scoring, and charge-to-100%.",
   "kinds": ["bar-widget", "service"],
   "entryPoints": {
     "barWidget": "Panel.qml",
@@ -13,7 +13,7 @@
   },
   "barWidget": {
     "displayName": "Z13 Power",
-    "description": "Battery plus z13-power profiles",
+    "description": "GZ302 TDP, RGB, fans, undervolt, and battery",
     "category": "System",
     "allowMultiple": false,
     "defaultSection": "right"

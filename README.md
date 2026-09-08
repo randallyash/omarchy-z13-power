@@ -1,14 +1,24 @@
 # Z13 Power
 
-Omarchy bar plugin for the **2025 ASUS ROG Flow Z13 (GZ302)**. A battery
-flyout with live charge, watts, and temp, plus Max / Perf / Mid / Quiet / Low,
-Automatic, Lock, and a one-shot charge-to-100%. A background service handles
-low-battery warnings without calling Omarchy’s `powerprofiles-set`.
+Omarchy command center for the **2025 ASUS ROG Flow Z13 (GZ302)**. Click the
+battery glyph for live charge, watts, and temp, then drive the machine:
+TDP profiles, RGB, fans, undervolt, and charge cap. Settings is one tap
+from the flyout.
+
+| | |
+|---|---|
+| **TDP** | Max / Perf / Mid / Quiet / Low, plus Automatic and Lock across plug/unplug |
+| **Telemetry** | Live charge, draw, package watts, and APU temp in the bar flyout |
+| **RGB** | Keyboard + lightbar: modes, colors, brightness, theme-follow |
+| **Fans** | Eight-point custom curve, or firmware auto |
+| **Undervolt** | Curve Optimizer with a silicon-lottery score (best / weakest core) and a suggested starting offset |
+| **Battery** | Charge cap, one-shot fill-to-100%, low-battery warnings that do not call Omarchy’s `powerprofiles-set` |
 
 This is a `bar-widget` with a nested details panel (same shape as stock
-`omarchy.power`) plus a `service`. Profile apply goes through
-[z13-power](https://github.com/randallyash/rog-z13-power-management); without
-that backend the glyph still shows charge, and the pills will not drive TDP.
+`omarchy.power`) plus a `service`. Profile apply, lighting, fans, and
+undervolt go through pinned
+[z13-power](https://github.com/randallyash/rog-z13-power-management). Without
+that backend the glyph still shows charge; the pills will not drive TDP.
 
 ## Pinned backends
 
@@ -78,7 +88,8 @@ install the backend.
 
 Click the battery glyph to open or close the flyout. Press Escape to close it.
 Pills apply Max / Perf / Mid / Quiet / Low. Automatic follows AC, battery, and
-low battery. Lock keeps a manual pick across plug/unplug.
+low battery. Lock keeps a manual pick across plug/unplug. Settings opens RGB,
+fan curve, undervolt (with silicon-lottery scoring), and charge cap.
 
 ## Configure
 
