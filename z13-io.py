@@ -52,18 +52,10 @@ class Pin:
     path: str = ""
 
 
-# Exact supported backends. Ranges (1.1.0+, 1.3.2+) are rejected.
-PIN_Z13CTL = Pin(
-    name="z13ctl",
-    rel=("bin", "z13ctl"),
-    sha256="3e49f796e6eec2021ce4716f57c19f5f65f43f76408cb56a6454f88147f5f4d6",
-    version_exact="z13ctl version 1.3.2",
-    tag="v1.3.2",
-    commit="2d794eadf28716e6acbc59df8275f08bea3a10c9",
-    artifact_url="https://github.com/dahui/z13ctl/releases/download/v1.3.2/z13ctl_1.3.2_linux_amd64.tar.gz",
-    artifact_sha256="95448e095673d38c507e0910ec9fb6ae9ea738eeb8beff691af12b74f548df94",
-    path="/usr/bin/z13ctl",
-)
+# z13-power 1.2.0 owns PPT, fans, lighting, and undervolt. /usr/bin/z13ctl
+# is not executed. Digest pins of an upstream z13ctl binary are what broke
+# this plugin when that package moved to 1.4.2.
+Z13_POWER_MIN = (1, 2, 0)
 PIN_Z13_POWER = Pin(
     name="z13-power",
     rel=("share", "z13-power-management", "z13-power"),
@@ -123,8 +115,8 @@ PIN_Z13_IO = Pin(
     path="/usr/share/z13-power-management/z13_power_io.py",
 )
 
-BACKEND_PINS = (PIN_Z13CTL, PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME, PIN_Z13_IO)
-SETTINGS_PINS = (PIN_Z13CTL, PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME, PIN_Z13_IO)
+BACKEND_PINS = (PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME, PIN_Z13_IO)
+SETTINGS_PINS = (PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME, PIN_Z13_IO)
 
 ENV_KEEP = (
     "HOME",
@@ -157,7 +149,7 @@ ENV_KEEP = (
 )
 
 
-def trusted_env(*, z13ctl_fd: int | None = None) -> dict[str, str]:
+def trusted_env() -> dict[str, str]:
     """Minimal env: PATH cannot reach user locations; Python cannot import them."""
     env: dict[str, str] = {}
     for key in ENV_KEEP:
@@ -169,7 +161,6 @@ def trusted_env(*, z13ctl_fd: int | None = None) -> dict[str, str]:
     env["PYTHONNOUSERSITE"] = "1"
     env["PYTHONSAFEPATH"] = "1"
     env["PYTHONDONTWRITEBYTECODE"] = "1"
-    env["Z13CTL"] = f"/proc/self/fd/{z13ctl_fd}" if z13ctl_fd is not None else "/usr/bin/z13ctl"
     env["XDG_DATA_DIRS"] = os.environ.get("XDG_DATA_DIRS") or "/usr/share"
     env["XDG_CONFIG_DIRS"] = os.environ.get("XDG_CONFIG_DIRS") or "/etc/xdg"
     return env
@@ -639,12 +630,11 @@ def spawn_fd(
         clear_cloexec(extra)
     proc_path = f"/proc/self/fd/{fd}"
     argv = [proc_path, *extra_argv]
-    zctl = extra_fds[0] if extra_fds else None
     proc = subprocess.Popen(
         argv,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        env=trusted_env(z13ctl_fd=zctl),
+        env=trusted_env(),
         start_new_session=True,
         close_fds=True,
         pass_fds=(fd, *extra_fds),
@@ -706,6 +696,30 @@ def require_pinned(pin: Pin) -> None:
     os.close(fd)
 
 
+def parse_semver(text: str) -> tuple[int, int, int] | None:
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", text)
+    if not match:
+        return None
+    return int(match.group(1)), int(match.group(2)), int(match.group(3))
+
+
+def require_z13_power() -> None:
+    """Root-owned z13-power at 1.2.0 or newer. That release owns the hardware."""
+    fd = open_usr_file(PIN_Z13_POWER.rel)
+    try:
+        out, rc = spawn_fd(fd, ["--version"], 2.0, 256, 256)
+    finally:
+        os.close(fd)
+    ver = parse_semver(out.decode("utf-8", "replace"))
+    if rc not in (0, None) or ver is None or ver < Z13_POWER_MIN:
+        fail(
+            "z13-power "
+            f"{Z13_POWER_MIN[0]}.{Z13_POWER_MIN[1]}.{Z13_POWER_MIN[2]}+ required "
+            "(built-in hardware control; /usr/bin/z13ctl is not used); "
+            f"got {out.decode('utf-8', 'replace').strip()!r}"
+        )
+
+
 def cmd_run(argv: list[str], timeout: float, max_bytes: int) -> None:
     if not argv:
         fail("run requires a command")
@@ -715,13 +729,9 @@ def cmd_run(argv: list[str], timeout: float, max_bytes: int) -> None:
         fd = open_usr_file(OMARCHY_BIN[name])
         extra_fds: tuple[int, ...] = ()
     elif name == "z13-power":
-        zctl = open_pinned(PIN_Z13CTL)
-        try:
-            fd = open_pinned(PIN_Z13_POWER)
-        except BaseException:
-            os.close(zctl)
-            raise
-        extra_fds = (zctl,)
+        require_z13_power()
+        fd = open_usr_file(PIN_Z13_POWER.rel)
+        extra_fds = ()
     else:
         fail(f"command not allowed: {name}")
     try:
@@ -736,26 +746,15 @@ def cmd_run(argv: list[str], timeout: float, max_bytes: int) -> None:
 
 
 def cmd_spawn_settings() -> None:
-    require_pinned(PIN_Z13_POWER)
+    require_z13_power()
     held: list[int] = []
     try:
-        zctl = open_pinned(PIN_Z13CTL)
-        held.append(zctl)
-        io_fd = open_pinned(PIN_Z13_IO)
-        held.append(io_fd)
-        common_fd = open_pinned(PIN_Z13_COMMON)
-        held.append(common_fd)
-        theme_fd = open_pinned(PIN_Z13_THEME)
-        held.append(theme_fd)
-        settings_fd = open_pinned(PIN_Z13_SETTINGS)
-        held.append(settings_fd)
+        for pin in (PIN_Z13_IO, PIN_Z13_COMMON, PIN_Z13_THEME, PIN_Z13_SETTINGS):
+            held.append(open_usr_file(pin.rel, executable=pin.executable))
         for fd in held:
             clear_cloexec(fd)
-        child_env = trusted_env(z13ctl_fd=zctl)
-        child_env["Z13_MOD_IO"] = f"/proc/self/fd/{io_fd}"
-        child_env["Z13_MOD_COMMON"] = f"/proc/self/fd/{common_fd}"
-        child_env["Z13_MOD_THEME"] = f"/proc/self/fd/{theme_fd}"
-        proc_path = f"/proc/self/fd/{settings_fd}"
+        child_env = trusted_env()
+        proc_path = f"/proc/self/fd/{held[-1]}"
         pid = os.fork()
         if pid == 0:
             try:
@@ -872,17 +871,20 @@ def cmd_read_hwmon() -> None:
 
 
 def cmd_check_deps() -> None:
-    out: dict[str, dict[str, str | None]] = {}
-    for pin in BACKEND_PINS:
-        require_pinned(pin)
-        out[pin.name] = {
-            "version": pin.version_exact,
-            "sha256": pin.sha256,
-            "tag": pin.tag,
-            "commit": pin.commit,
-            "path": pin.path,
+    """Confirm the built-in controller is installed. Does not look at z13ctl."""
+    require_z13_power()
+    fd = open_usr_file(PIN_Z13_POWER.rel)
+    try:
+        out, _rc = spawn_fd(fd, ["--version"], 2.0, 256, 256)
+    finally:
+        os.close(fd)
+    print(json.dumps({
+        "z13-power": {
+            "version": out.decode("utf-8", "replace").strip(),
+            "path": PIN_Z13_POWER.path,
+            "z13ctl": "not used",
         }
-    print(json.dumps(out, separators=(",", ":")))
+    }, separators=(",", ":")))
 
 
 def main() -> None:

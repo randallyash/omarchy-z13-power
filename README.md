@@ -16,62 +16,29 @@ from the flyout.
 
 This is a `bar-widget` with a nested details panel (same shape as stock
 `omarchy.power`) plus a `service`. Profile apply, lighting, fans, and
-undervolt go through pinned
-[z13-power](https://github.com/randallyash/rog-z13-power-management). Without
-that backend the glyph still shows charge; the pills will not drive TDP.
+undervolt go through
+[z13-power](https://github.com/randallyash/rog-z13-power-management) **1.2.0
+or newer**. That backend writes power limits directly to the Ryzen SMU
+(stapm, slow, and fast), which is what the APU follows. **`z13ctl` is not
+a dependency** and is not executed, so an AUR update of `z13ctl-bin` cannot
+break the pills. Without that backend the glyph still shows charge.
 
-## Pinned backends
+## Backend
 
-This plugin executes only the exact artifacts below. `z13-io.py` hashes the
-held file descriptor and requires that exact identity; ranges such as
-`1.1.0+` / `1.3.2+` are rejected. Install from these release URLs. Do not
-install from `main`, from `z13-power-git`, or from an unverified clone.
+`z13-io.py` runs only a root-owned `z13-power` under `/usr` and requires
+`z13-power 1.2.0` or newer (`z13-power --version`). Hardware control is
+inside that tree (`z13_power_hw.py`), including the SMU mailbox. There is
+no `z13ctl` package to install and `/usr/bin/z13ctl` is not executed.
 
-| Dependency | Tag / commit | Release artifact | Installed path + digest | Runtime identity |
-|---|---|---|---|---|
-| **z13ctl** | `v1.3.2` (`2d794eadf28716e6acbc59df8275f08bea3a10c9`) | [z13ctl_1.3.2_linux_amd64.tar.gz](https://github.com/dahui/z13ctl/releases/download/v1.3.2/z13ctl_1.3.2_linux_amd64.tar.gz) `sha256:95448e095673d38c507e0910ec9fb6ae9ea738eeb8beff691af12b74f548df94` | `/usr/bin/z13ctl` `sha256:3e49f796e6eec2021ce4716f57c19f5f65f43f76408cb56a6454f88147f5f4d6` | `z13ctl version 1.3.2` |
-| **z13-power** | `v1.1.4` (`620a227d0905363bdd17d94e321d51eeb0254940`) | [rog-z13-power-management-1.1.4.tar.gz](https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz) `sha256:93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5` | `/usr/share/z13-power-management/z13-power` `sha256:ce518274d54d4c1b366b2381bd4f48c76d03884e20a8c6bc9aaabc16ab2fc734` | `z13-power 1.1.4` |
-| **z13-power-settings** | same `v1.1.4` tree | same tarball | `/usr/share/z13-power-management/z13-power-settings` `sha256:cac5377de48eaa3ae3b30f45327f03971aa9a77d14e14a369fbd25c9fc9bcf92` | file digest |
-| **z13_power_common.py** | same `v1.1.4` tree | same tarball | `/usr/share/z13-power-management/z13_power_common.py` `sha256:642961682003749d599597373f906f7312f42cec6bf578d1c23845ca356efa09` | file digest |
-| **z13_power_theme.py** | same `v1.1.4` tree | same tarball | `/usr/share/z13-power-management/z13_power_theme.py` `sha256:9152869ab456a0325d6e8bfeacb433b2f352f58ddf1abb18242c7113a6bdc518` | file digest |
-| **z13_power_io.py** | same `v1.1.4` tree | same tarball | `/usr/share/z13-power-management/z13_power_io.py` `sha256:518dc7adc478ddd6b260f2d07077ef44d1a20d2ac3d880a8c4dde4353e31493a` | file digest |
+| Dependency | Required | Installed path | Runtime identity |
+|---|---|---|---|
+| **z13-power** | `1.2.0+` | `/usr/share/z13-power-management/z13-power` | `z13-power 1.2.0` |
+| **controller** | same tree | `/usr/share/z13-power-management/z13_power_hw.py` | imported by the service |
+| **settings** | same tree | `/usr/share/z13-power-management/z13-power-settings` | root-owned file |
 
-Provenance: [dahui/z13ctl v1.3.2](https://github.com/dahui/z13ctl/releases/tag/v1.3.2) (annotated, signed tag; `checksums.txt` on the release matches the tarball digest) and [randallyash/rog-z13-power-management v1.1.4](https://github.com/randallyash/rog-z13-power-management/releases/tag/v1.1.4) (`SHA256SUMS` on the release; GitHub asset digest matches the tarball). A rebuilt or debug-split binary will not match and is refused.
-
-### Install the pinned files
-
-```sh
-# z13ctl v1.3.2 → /usr/bin/z13ctl
-curl -L -O https://github.com/dahui/z13ctl/releases/download/v1.3.2/z13ctl_1.3.2_linux_amd64.tar.gz
-echo '95448e095673d38c507e0910ec9fb6ae9ea738eeb8beff691af12b74f548df94  z13ctl_1.3.2_linux_amd64.tar.gz' | sha256sum -c
-tar -xzf z13ctl_1.3.2_linux_amd64.tar.gz z13ctl
-sudo install -Dm755 z13ctl /usr/bin/z13ctl
-echo '3e49f796e6eec2021ce4716f57c19f5f65f43f76408cb56a6454f88147f5f4d6  /usr/bin/z13ctl' | sha256sum -c
-
-# z13-power v1.1.4 → /usr/share/z13-power-management/
-curl -L -O https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz
-echo '93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5  rog-z13-power-management-1.1.4.tar.gz' | sha256sum -c
-tar -xzf rog-z13-power-management-1.1.4.tar.gz
-sudo install -Dm755 rog-z13-power-management-1.1.4/scripts/z13-power \
-  /usr/share/z13-power-management/z13-power
-sudo install -Dm755 rog-z13-power-management-1.1.4/service/z13-power-settings \
-  /usr/share/z13-power-management/z13-power-settings
-sudo install -Dm644 rog-z13-power-management-1.1.4/service/z13_power_common.py \
-  /usr/share/z13-power-management/z13_power_common.py
-sudo install -Dm644 rog-z13-power-management-1.1.4/service/z13_power_theme.py \
-  /usr/share/z13-power-management/z13_power_theme.py
-sudo install -Dm644 rog-z13-power-management-1.1.4/service/z13_power_io.py \
-  /usr/share/z13-power-management/z13_power_io.py
-echo 'ce518274d54d4c1b366b2381bd4f48c76d03884e20a8c6bc9aaabc16ab2fc734  /usr/share/z13-power-management/z13-power' | sha256sum -c
-echo 'cac5377de48eaa3ae3b30f45327f03971aa9a77d14e14a369fbd25c9fc9bcf92  /usr/share/z13-power-management/z13-power-settings' | sha256sum -c
-echo '642961682003749d599597373f906f7312f42cec6bf578d1c23845ca356efa09  /usr/share/z13-power-management/z13_power_common.py' | sha256sum -c
-echo '9152869ab456a0325d6e8bfeacb433b2f352f58ddf1abb18242c7113a6bdc518  /usr/share/z13-power-management/z13_power_theme.py' | sha256sum -c
-echo '518dc7adc478ddd6b260f2d07077ef44d1a20d2ac3d880a8c4dde4353e31493a  /usr/share/z13-power-management/z13_power_io.py' | sha256sum -c
-```
-
-Those six files are the plugin's runtime closure. Remaining files in the
-same v1.1.4 tarball (service, udev, license) may be installed from that tree
-into the same prefix; they must not come from a different commit.
+Install z13-power 1.2.0 from its tree (`install.sh`, or copy `scripts/` and
+`service/` into `/usr/share/z13-power-management/`). Do not install a
+`z13ctl` package for this plugin.
 
 ## Install the plugin
 
@@ -112,12 +79,9 @@ Runtime enforcement in `z13-io.py`:
   via a held file descriptor (`/proc/self/fd/N`).
 - Rejects `S_IWGRP` and `S_IWOTH` on `/usr` itself, every path component, and
   the file.
-- Requires the exact pinned sha256 (and `--version` where it exists) on the
-  same fd. `z13-power` is launched with that already-validated `z13ctl` fd
-  (`Z13CTL=/proc/self/fd/N`). Settings is started with the hashed companion
-  module fds (`Z13_MOD_IO` / `_COMMON` / `_THEME`); it rehashes those same
-  fds and `importlib`-loads them before any companion code runs. There is
-  no pathname import and no `PYTHONPATH`.
+- Requires `z13-power --version` to be 1.2.0 or newer on that same fd.
+  Settings is started from the same root-owned directory. There is no
+  `/usr/bin/z13ctl` fd and no `Z13CTL` environment variable.
 - Child processes get a sanitized environment: `PATH=/usr/bin`,
   `PYTHONNOUSERSITE=1`, `PYTHONSAFEPATH=1`.
   `PYTHONPATH`/`PYTHONHOME`/`LD_PRELOAD` from the caller are dropped.
