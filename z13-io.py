@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import errno
 import fcntl
-import hashlib
 import json
 import os
 import pwd
@@ -29,7 +28,6 @@ MAX_PROC_BYTES = 32 * 1024
 MAX_ERR_BYTES = 8 * 1024
 MAX_COMMAND_BYTES = 2048
 MAX_STATUS_STRING = 64
-MAX_EXEC_BYTES = 16 * 1024 * 1024
 DEFAULT_TIMEOUT = 3.0
 DIAGNOSE_TIMEOUT = 8.0
 
@@ -42,81 +40,41 @@ UNTRUSTED_WRITE = stat.S_IWGRP | stat.S_IWOTH
 class Pin:
     name: str
     rel: tuple[str, ...]
-    sha256: str
-    version_exact: str | None
-    tag: str
-    commit: str
-    artifact_url: str
-    artifact_sha256: str
     executable: bool = True
     path: str = ""
 
 
-# z13-power 1.2.0 owns PPT, fans, lighting, and undervolt. /usr/bin/z13ctl
-# is not executed. Digest pins of an upstream z13ctl binary are what broke
-# this plugin when that package moved to 1.4.2.
+# z13-power 1.2.0 owns PPT, fans, lighting, and undervolt. Trust is the
+# root-owned /usr chain plus that version, not a digest of z13ctl.
 Z13_POWER_MIN = (1, 2, 0)
 PIN_Z13_POWER = Pin(
     name="z13-power",
     rel=("share", "z13-power-management", "z13-power"),
-    sha256="ce518274d54d4c1b366b2381bd4f48c76d03884e20a8c6bc9aaabc16ab2fc734",
-    version_exact="z13-power 1.1.4",
-    tag="v1.1.4",
-    commit="620a227d0905363bdd17d94e321d51eeb0254940",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz",
-    artifact_sha256="93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5",
     path="/usr/share/z13-power-management/z13-power",
 )
 PIN_Z13_SETTINGS = Pin(
     name="z13-power-settings",
     rel=("share", "z13-power-management", "z13-power-settings"),
-    sha256="cac5377de48eaa3ae3b30f45327f03971aa9a77d14e14a369fbd25c9fc9bcf92",
-    version_exact=None,
-    tag="v1.1.4",
-    commit="620a227d0905363bdd17d94e321d51eeb0254940",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz",
-    artifact_sha256="93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5",
     path="/usr/share/z13-power-management/z13-power-settings",
 )
 PIN_Z13_COMMON = Pin(
     name="z13_power_common.py",
     rel=("share", "z13-power-management", "z13_power_common.py"),
-    sha256="642961682003749d599597373f906f7312f42cec6bf578d1c23845ca356efa09",
-    version_exact=None,
-    tag="v1.1.4",
-    commit="620a227d0905363bdd17d94e321d51eeb0254940",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz",
-    artifact_sha256="93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5",
     executable=False,
     path="/usr/share/z13-power-management/z13_power_common.py",
 )
 PIN_Z13_THEME = Pin(
     name="z13_power_theme.py",
     rel=("share", "z13-power-management", "z13_power_theme.py"),
-    sha256="9152869ab456a0325d6e8bfeacb433b2f352f58ddf1abb18242c7113a6bdc518",
-    version_exact=None,
-    tag="v1.1.4",
-    commit="620a227d0905363bdd17d94e321d51eeb0254940",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz",
-    artifact_sha256="93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5",
     executable=False,
     path="/usr/share/z13-power-management/z13_power_theme.py",
 )
 PIN_Z13_IO = Pin(
     name="z13_power_io.py",
     rel=("share", "z13-power-management", "z13_power_io.py"),
-    sha256="518dc7adc478ddd6b260f2d07077ef44d1a20d2ac3d880a8c4dde4353e31493a",
-    version_exact=None,
-    tag="v1.1.4",
-    commit="620a227d0905363bdd17d94e321d51eeb0254940",
-    artifact_url="https://github.com/randallyash/rog-z13-power-management/releases/download/v1.1.4/rog-z13-power-management-1.1.4.tar.gz",
-    artifact_sha256="93959bce9e22ae58d731c4b39a7aa02d871628b9954cc1f375d95e572f4ec4d5",
     executable=False,
     path="/usr/share/z13-power-management/z13_power_io.py",
 )
-
-BACKEND_PINS = (PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME, PIN_Z13_IO)
-SETTINGS_PINS = (PIN_Z13_POWER, PIN_Z13_SETTINGS, PIN_Z13_COMMON, PIN_Z13_THEME, PIN_Z13_IO)
 
 ENV_KEEP = (
     "HOME",
@@ -645,55 +603,6 @@ def spawn_fd(
     finally:
         if proc.poll() is None:
             kill_group(proc)
-
-
-def sha256_fd(fd: int) -> str:
-    st = os.fstat(fd)
-    if st.st_size > MAX_EXEC_BYTES:
-        fail("binary too large")
-    digest = hashlib.sha256()
-    os.lseek(fd, 0, os.SEEK_SET)
-    total = 0
-    while True:
-        chunk = os.read(fd, 65536)
-        if not chunk:
-            break
-        total += len(chunk)
-        if total > MAX_EXEC_BYTES:
-            fail("binary too large")
-        digest.update(chunk)
-    os.lseek(fd, 0, os.SEEK_SET)
-    return digest.hexdigest()
-
-
-def open_pinned(pin: Pin) -> int:
-    """Open a pinned backend on the /usr exec chain; hash and identity the same fd."""
-    fd = open_usr_file(pin.rel, executable=pin.executable)
-    try:
-        got = sha256_fd(fd)
-        if got != pin.sha256:
-            fail(
-                f"{pin.name} sha256 mismatch (expected {pin.sha256}, got {got}; "
-                f"install {pin.tag} from {pin.artifact_url})"
-            )
-        if pin.version_exact is not None:
-            out, rc = spawn_fd(fd, ["--version"], 2.0, 256, 256)
-            identity = out.decode("utf-8", "replace").strip()
-            if rc not in (0, None) or identity != pin.version_exact:
-                fail(
-                    f"{pin.name} identity mismatch "
-                    f"(expected {pin.version_exact!r}, got {identity!r})"
-                )
-        _check_reg_trusted(os.fstat(fd), executable=pin.executable)
-        return fd
-    except BaseException:
-        os.close(fd)
-        raise
-
-
-def require_pinned(pin: Pin) -> None:
-    fd = open_pinned(pin)
-    os.close(fd)
 
 
 def parse_semver(text: str) -> tuple[int, int, int] | None:
