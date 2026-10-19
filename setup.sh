@@ -46,8 +46,8 @@ got="$(git -C "$tmp" rev-parse HEAD)"
 [[ "$got" == "f1f47f7e6b6aa7dd16923e241afef1447eda81d5" ]] || die "checkout was $got"
 [[ -f "$tmp/service/z13_power_hw.py" && -f "$tmp/scripts/z13-power" ]] || die "downloaded tree is incomplete"
 
-cat >"$tmp/install-root.sh" <<'EOF'
-#!/bin/bash
+# Copy reviewed files into /usr. Do not execute anything from the checkout.
+sudo bash -c '
 set -euo pipefail
 src="${1:?}"
 share=/usr/share/z13-power-management
@@ -79,9 +79,7 @@ for a in ppt_pl1_spl ppt_pl2_sppt ppt_pl3_fppt; do
   chgrp users "$f" || true
   chmod g+w "$f" || true
 done
-EOF
-chmod 700 "$tmp/install-root.sh"
-sudo bash "$tmp/install-root.sh" "$tmp"
+' bash "$tmp"
 
 ver="$("$SHARE/z13-power" --version)"
 [[ "$ver" == "$MIN"* ]] || die "installed $ver, wanted $MIN or newer"
