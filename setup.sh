@@ -4,7 +4,6 @@
 # does not copy a second plugin over this one.
 set -euo pipefail
 
-PIN=f1f47f7e6b6aa7dd16923e241afef1447eda81d5
 REPO=https://github.com/randallyash/rog-z13-power-management.git
 SHARE=/usr/share/z13-power-management
 MIN="z13-power 1.2"
@@ -25,7 +24,7 @@ fi
 
 say "Z13 Power needs its backend before the pills can change watts."
 say "This will:"
-say "  - download rog-z13-power-management at $PIN"
+say "  - download rog-z13-power-management at f1f47f7e6b6aa7dd16923e241afef1447eda81d5"
 say "  - install that tree under $SHARE and link /usr/bin/z13-power"
 say "  - install the armoury udev rule and start z13-power-service"
 say "  - install python-pyqt6, python-pyudev, python-dbus-next, and libnotify if they are missing"
@@ -41,10 +40,10 @@ trap 'rm -rf "$tmp"' EXIT
 
 git -C "$tmp" init -q
 git -C "$tmp" remote add origin "$REPO"
-git -C "$tmp" fetch --depth 1 origin "$PIN"
-git -C "$tmp" checkout --detach FETCH_HEAD
+git -C "$tmp" fetch --depth 1 origin f1f47f7e6b6aa7dd16923e241afef1447eda81d5
+git -C "$tmp" checkout --detach f1f47f7e6b6aa7dd16923e241afef1447eda81d5
 got="$(git -C "$tmp" rev-parse HEAD)"
-[[ "$got" == "$PIN" ]] || die "checkout was $got, wanted $PIN"
+[[ "$got" == "f1f47f7e6b6aa7dd16923e241afef1447eda81d5" ]] || die "checkout was $got"
 [[ -f "$tmp/service/z13_power_hw.py" && -f "$tmp/scripts/z13-power" ]] || die "downloaded tree is incomplete"
 
 cat >"$tmp/install-root.sh" <<'EOF'
