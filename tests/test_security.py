@@ -54,7 +54,7 @@ def main() -> None:
     setup = open(os.path.join(ROOT, "setup.sh"), encoding="utf-8").read()
     check(
         "setup pins backend and skips z13ctl",
-        "f9376712a8fca0589a5b6e85c0ccb51bffe06b6b" in setup
+        "cda1f79e1e30d57481e27e551db1e0c71de7c95b" in setup
         and "z13-power-omarchy-setup" not in setup
         and "z13ctl is not used" in setup
         and "/usr/bin/z13ctl" not in setup,
