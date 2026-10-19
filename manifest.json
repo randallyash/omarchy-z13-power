@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.randallyash.z13-power",
   "name": "Z13 Power",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": "Randall Yash",
   "license": "GPL-3.0-or-later",
   "description": "GZ302 command center: TDP Max/Perf/Mid/Quiet/Low, live watts and temp, RGB keyboard + lightbar, custom fan curves, Curve Optimizer undervolt with silicon-lottery scoring, and charge-to-100%.",

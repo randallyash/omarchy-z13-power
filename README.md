@@ -36,20 +36,22 @@ no `z13ctl` package to install and `/usr/bin/z13ctl` is not executed.
 | **controller** | same tree | `/usr/share/z13-power-management/z13_power_hw.py` | imported by the service |
 | **settings** | same tree | `/usr/share/z13-power-management/z13-power-settings` | root-owned file |
 
-Install z13-power 1.2.0 from its tree (`install.sh`, or copy `scripts/` and
-`service/` into `/usr/share/z13-power-management/`). Do not install a
-`z13ctl` package for this plugin.
+Do not install a `z13ctl` package for this plugin.
 
-## Install the plugin
+## Install
 
-GZ302 only. Backends first, then:
+GZ302 only. Add the plugin, then run its setup once:
 
 ```sh
 omarchy plugin add https://github.com/randallyash/omarchy-z13-power.git --enable
+~/.config/omarchy/plugins/io.github.randallyash.z13-power/setup.sh
 ```
 
-That clones and enables the plugin. It does not rewrite your bar and does not
-install the backend.
+Or open the flyout and press **Install backend**. That opens a terminal on the same script. Type `yes`, then approve the password prompt.
+
+`setup.sh` downloads [rog-z13-power-management](https://github.com/randallyash/rog-z13-power-management) at commit `f1f47f7e6b6aa7dd16923e241afef1447eda81d5`, installs that tree under `/usr/share/z13-power-management`, and starts `z13-power-service`. It refuses any other commit. It does not install `z13ctl` and does not replace this plugin. If `z13-power 1.2.0` is already there, it exits without changing anything.
+
+20 W Quiet and 15 W Low also need the `ryzen_smu` module. Setup prints `z13-power setup-undervolt` when that module is not loaded. That command is separate because it builds a DKMS module.
 
 ## Usage
 
@@ -66,9 +68,7 @@ Put it in the right-hand (battery) slot:
 omarchy bar move io.github.randallyash.z13-power --section right
 ```
 
-This is a **manual-setup** plugin. `omarchy plugin add` only installs the
-bar widget. Profile apply, TDP, and charge cap come from the pinned backend
-above.
+This stays a **manual-setup** plugin. `omarchy plugin add` installs the bar widget. `setup.sh` is the one follow-up that installs the backend.
 
 Runtime enforcement in `z13-io.py`:
 

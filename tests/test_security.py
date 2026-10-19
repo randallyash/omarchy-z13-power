@@ -49,6 +49,17 @@ def main() -> None:
         qml = open(os.path.join(ROOT, name), encoding="utf-8").read()
         check(f"{name} uses /usr/bin/python3", '"/usr/bin/python3"' in qml and '"python3"' not in qml)
 
+    panel = open(os.path.join(ROOT, "Z13PowerPanel.qml"), encoding="utf-8").read()
+    check("flyout offers setup", "Install backend" in panel and "xdg-terminal-exec" in panel)
+    setup = open(os.path.join(ROOT, "setup.sh"), encoding="utf-8").read()
+    check(
+        "setup pins backend and skips z13ctl",
+        "f1f47f7e6b6aa7dd16923e241afef1447eda81d5" in setup
+        and "z13-power-omarchy-setup" not in setup
+        and "z13ctl is not used" in setup
+        and "/usr/bin/z13ctl" not in setup,
+    )
+
     deps = run(["check-deps"])
     check("check-deps exits 0", deps.returncode == 0, deps.stderr)
     body = json.loads(deps.stdout)

@@ -75,7 +75,10 @@ Column {
   property string diagnoseText: ""
   property bool diagnoseBusy: false
   readonly property int diagnoseCap: 4000
+  property bool backendReady: true
+  property bool backendKnown: false
   readonly property string ioScript: String(Qt.resolvedUrl("z13-io.py")).replace(/^file:\/\//, "")
+  readonly property string setupScript: String(Qt.resolvedUrl("setup.sh")).replace(/^file:\/\//, "")
 
   function ioCmd() {
     var a = ["/usr/bin/python3", root.ioScript]
@@ -136,6 +139,13 @@ Column {
   function reloadState() {
     if (!statusProc.running) statusProc.running = true
     if (!confProc.running) confProc.running = true
+    if (!backendProc.running) backendProc.running = true
+  }
+
+  function launchSetup() {
+    setupProc.command = ["xdg-terminal-exec", "--hold", "--title=Z13 Power setup", "--", "bash", root.setupScript]
+    setupProc.running = false
+    setupProc.running = true
   }
 
   Process {
@@ -183,6 +193,19 @@ Column {
   }
 
   Process {
+    id: backendProc
+    command: root.ioCmd("check-deps")
+    onExited: function(exitCode) {
+      root.backendReady = exitCode === 0
+      root.backendKnown = true
+    }
+  }
+
+  Process {
+    id: setupProc
+  }
+
+  Process {
     id: diagnoseProc
     stdout: StdioCollector {
       waitForEnd: true
@@ -200,9 +223,34 @@ Column {
     }
   }
 
+  Column {
+    visible: root.backendKnown && !root.backendReady
+    width: parent.width
+    spacing: Style.space(8)
+
+    Text {
+      width: parent.width
+      text: "The pills need z13-power 1.2.0. Install opens a terminal, asks you to type yes, then asks for your password. It does not install z13ctl."
+      textFormat: Text.PlainText
+      wrapMode: Text.Wrap
+      color: root.foreground
+      font.family: root.fontFamily
+      font.pixelSize: Style.font.bodySmall
+    }
+
+    Button {
+      text: "Install backend"
+      foreground: root.foreground
+      accent: root.accent
+      fontFamily: root.fontFamily
+      bordered: true
+      onClicked: root.launchSetup()
+    }
+  }
+
   // ---------- Hero ----------
   Item {
-    visible: !root.embedInPowerPanel
+    visible: !root.embedInPowerPanel && root.backendReady
     width: parent.width
     implicitHeight: visible ? Math.max(heroIcon.implicitHeight, heroLabels.implicitHeight, heroTdp.implicitHeight) : 0
 
@@ -262,7 +310,7 @@ Column {
 
   // ---------- Stats ----------
   Row {
-    visible: !root.embedInPowerPanel
+    visible: !root.embedInPowerPanel && root.backendReady
     width: parent.width
     spacing: Style.space(20)
 
@@ -282,12 +330,13 @@ Column {
   }
 
   PanelSeparator {
-    visible: !root.embedInPowerPanel
+    visible: !root.embedInPowerPanel && root.backendReady
     foreground: root.foreground
   }
 
   // ---------- Profile picker ----------
   Column {
+    visible: root.backendReady
     width: parent.width
     spacing: Style.space(10)
 
@@ -365,9 +414,13 @@ Column {
     }
   }
 
-  PanelSeparator { foreground: root.foreground }
+  PanelSeparator {
+    visible: root.backendReady
+    foreground: root.foreground
+  }
 
   Toggle {
+    visible: root.backendReady
     width: parent.width
     label: "Lock profile"
     description: root.automatic
@@ -382,6 +435,7 @@ Column {
   }
 
   Toggle {
+    visible: root.backendReady
     width: parent.width
     label: "Charge to 100%"
     description: root.fillOnce
@@ -399,6 +453,7 @@ Column {
   }
 
   Row {
+    visible: root.backendReady
     width: parent.width
     spacing: Style.space(6)
 
