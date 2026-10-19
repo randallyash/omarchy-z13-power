@@ -24,7 +24,7 @@ fi
 
 say "Z13 Power needs its backend before the pills can change watts."
 say "This will:"
-say "  - download rog-z13-power-management at f1f47f7e6b6aa7dd16923e241afef1447eda81d5"
+say "  - download rog-z13-power-management at f9376712a8fca0589a5b6e85c0ccb51bffe06b6b"
 say "  - install that tree under $SHARE and link /usr/bin/z13-power"
 say "  - install the armoury udev rule and start z13-power-service"
 say "  - install python-pyqt6, python-pyudev, python-dbus-next, and libnotify if they are missing"
@@ -40,10 +40,10 @@ trap 'rm -rf "$tmp"' EXIT
 
 git -C "$tmp" init -q
 git -C "$tmp" remote add origin "$REPO"
-git -C "$tmp" fetch --depth 1 origin f1f47f7e6b6aa7dd16923e241afef1447eda81d5
-git -C "$tmp" checkout --detach f1f47f7e6b6aa7dd16923e241afef1447eda81d5
+git -C "$tmp" fetch --depth 1 origin f9376712a8fca0589a5b6e85c0ccb51bffe06b6b
+git -C "$tmp" checkout --detach f9376712a8fca0589a5b6e85c0ccb51bffe06b6b
 got="$(git -C "$tmp" rev-parse HEAD)"
-[[ "$got" == "f1f47f7e6b6aa7dd16923e241afef1447eda81d5" ]] || die "checkout was $got"
+[[ "$got" == "f9376712a8fca0589a5b6e85c0ccb51bffe06b6b" ]] || die "checkout was $got"
 [[ -f "$tmp/service/z13_power_hw.py" && -f "$tmp/scripts/z13-power" ]] || die "downloaded tree is incomplete"
 
 # Copy reviewed files into /usr. Do not execute anything from the checkout.

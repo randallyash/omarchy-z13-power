@@ -54,7 +54,7 @@ def main() -> None:
     setup = open(os.path.join(ROOT, "setup.sh"), encoding="utf-8").read()
     check(
         "setup pins backend and skips z13ctl",
-        "f1f47f7e6b6aa7dd16923e241afef1447eda81d5" in setup
+        "f9376712a8fca0589a5b6e85c0ccb51bffe06b6b" in setup
         and "z13-power-omarchy-setup" not in setup
         and "z13ctl is not used" in setup
         and "/usr/bin/z13ctl" not in setup,
@@ -81,7 +81,7 @@ def main() -> None:
     status = run(["read-status"])
     check("read-status", status.returncode == 0 and status.stdout.strip().startswith("{"), status.stderr)
     parsed = json.loads(status.stdout)
-    check("status stays quiet", parsed.get("mode") == "silent" and parsed.get("tdp") == 20, status.stdout)
+    check("status stays quiet", parsed.get("mode") == "silent" and parsed.get("tdp") == 28, status.stdout)
 
     print("security tests passed")
 
