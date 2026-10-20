@@ -24,12 +24,12 @@ fi
 
 say "Z13 Power needs its backend before the pills can change watts."
 say "This will:"
-say "  - download rog-z13-power-management at cda1f79e1e30d57481e27e551db1e0c71de7c95b"
+say "  - download rog-z13-power-management at a2829da8b2b468cf244979e1e5f7cafe031e55d7"
 say "  - install that tree under $SHARE and link /usr/bin/z13-power"
 say "  - install the armoury udev rule and start z13-power-service"
 say "  - install python-pyqt6, python-pyudev, python-dbus-next, and libnotify if they are missing"
 say "It will not install z13ctl, and it will not replace this plugin."
-say "Quiet is 20 W and Low is 15 W once ryzen_smu is loaded. That module is a separate package."
+say "Quiet uses the firmware quiet profile. It does not pin the SMU."
 say
 printf 'Type yes to continue: '
 read -r answer
@@ -40,10 +40,10 @@ trap 'rm -rf "$tmp"' EXIT
 
 git -C "$tmp" init -q
 git -C "$tmp" remote add origin "$REPO"
-git -C "$tmp" fetch --depth 1 origin cda1f79e1e30d57481e27e551db1e0c71de7c95b
-git -C "$tmp" checkout --detach cda1f79e1e30d57481e27e551db1e0c71de7c95b
+git -C "$tmp" fetch --depth 1 origin a2829da8b2b468cf244979e1e5f7cafe031e55d7
+git -C "$tmp" checkout --detach a2829da8b2b468cf244979e1e5f7cafe031e55d7
 got="$(git -C "$tmp" rev-parse HEAD)"
-[[ "$got" == "cda1f79e1e30d57481e27e551db1e0c71de7c95b" ]] || die "checkout was $got"
+[[ "$got" == "a2829da8b2b468cf244979e1e5f7cafe031e55d7" ]] || die "checkout was $got"
 [[ -f "$tmp/service/z13_power_hw.py" && -f "$tmp/scripts/z13-power" ]] || die "downloaded tree is incomplete"
 
 # Copy reviewed files into /usr. Do not execute anything from the checkout.
@@ -92,7 +92,7 @@ say
 say "Installed $ver"
 say "z13ctl is not used."
 if ! grep -qw ryzen_smu_drv /proc/modules 2>/dev/null; then
-  say "ryzen_smu is not loaded, so 20 W Quiet and 15 W Low cannot hold yet."
-  say "When you want that module: z13-power setup-undervolt"
+  say "ryzen_smu is not loaded. Quiet does not need it."
+  say "When you want curve optimizer: z13-power setup-undervolt"
 fi
 say "Open the battery flyout again. The pills should be live."
