@@ -49,7 +49,7 @@ omarchy plugin add https://github.com/randallyash/omarchy-z13-power.git --enable
 
 Or open the flyout and press **Install backend**. That opens a terminal on the same script. Type `yes`, then approve the password prompt.
 
-`setup.sh` downloads [rog-z13-power-management](https://github.com/randallyash/rog-z13-power-management) at commit `9e3ce9f1e895a8d7dddff8a34d41d9531096400c`, installs that tree under `/usr/share/z13-power-management`, and starts `z13-power-service`. It refuses any other commit. It does not install `z13ctl` and does not replace this plugin. If `z13-power 1.2.0` is already there, it exits without changing anything.
+`setup.sh` downloads [rog-z13-power-management](https://github.com/randallyash/rog-z13-power-management) at commit `d1c26524e64e2946559812f06f235fc1e613ae44`, installs that tree under `/usr/share/z13-power-management`, and starts `z13-power-service`. It refuses any other commit. It does not install `z13ctl` and does not replace this plugin. If `z13-power 1.4.1` is already there, it exits without changing anything.
 
 20 W Quiet and 15 W Low also need the `ryzen_smu` module. Setup prints `z13-power setup-undervolt` when that module is not loaded. That command is separate because it builds a DKMS module.
 

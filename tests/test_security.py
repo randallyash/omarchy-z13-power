@@ -2,7 +2,7 @@
 """Security checks for the Z13 Omarchy plugin helper.
 
 The helper must run as /usr/bin/python3, talk only to a root-owned
-z13-power 1.4.0+, and refuse z13ctl plus any other command.
+z13-power 1.4.1+, and refuse z13ctl plus any other command.
 """
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ def main() -> None:
     setup = open(os.path.join(ROOT, "setup.sh"), encoding="utf-8").read()
     check(
         "setup pins backend and skips z13ctl",
-        "9e3ce9f1e895a8d7dddff8a34d41d9531096400c" in setup
+        "d1c26524e64e2946559812f06f235fc1e613ae44" in setup
         and "lock-smu-sysfs" in setup
         and "lock-power-sysfs" in setup
         and "chmod a+w" not in setup

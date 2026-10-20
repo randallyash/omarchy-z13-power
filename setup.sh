@@ -6,7 +6,7 @@ set -euo pipefail
 
 REPO=https://github.com/randallyash/rog-z13-power-management.git
 SHARE=/usr/share/z13-power-management
-MIN="z13-power 1.4"
+MIN="z13-power 1.4.1"
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'setup: %s\n' "$*" >&2; exit 1; }
@@ -29,12 +29,12 @@ fi
 
 say "Z13 Power needs its backend before the pills can change watts."
 say "This will:"
-say "  - download rog-z13-power-management at 9e3ce9f1e895a8d7dddff8a34d41d9531096400c"
+say "  - download rog-z13-power-management at d1c26524e64e2946559812f06f235fc1e613ae44"
 say "  - install that tree under $SHARE and link /usr/bin/z13-power"
 say "  - install the armoury udev rule, lock the SMU mailbox to root, and start z13-power-service"
 say "  - install python-pyqt6, python-pyudev, python-dbus-next, and libnotify if they are missing"
 say "It will not install z13ctl, and it will not replace this plugin."
-say "Quiet uses the firmware quiet profile. It does not pin the SMU."
+say "Quiet is firmware quiet plus armoury 28/32/45. It does not write the SMU mailbox."
 say
 printf 'Type yes to continue: '
 read -r answer
@@ -45,10 +45,10 @@ trap 'rm -rf "$tmp"' EXIT
 
 git -C "$tmp" init -q
 git -C "$tmp" remote add origin "$REPO"
-git -C "$tmp" fetch --depth 1 origin 9e3ce9f1e895a8d7dddff8a34d41d9531096400c
-git -C "$tmp" checkout --detach 9e3ce9f1e895a8d7dddff8a34d41d9531096400c
+git -C "$tmp" fetch --depth 1 origin d1c26524e64e2946559812f06f235fc1e613ae44
+git -C "$tmp" checkout --detach d1c26524e64e2946559812f06f235fc1e613ae44
 got="$(git -C "$tmp" rev-parse HEAD)"
-[[ "$got" == "9e3ce9f1e895a8d7dddff8a34d41d9531096400c" ]] || die "checkout was $got"
+[[ "$got" == "d1c26524e64e2946559812f06f235fc1e613ae44" ]] || die "checkout was $got"
 [[ -f "$tmp/service/z13_power_hw.py" && -f "$tmp/scripts/z13-power" ]] || die "downloaded tree is incomplete"
 
 # Copy reviewed files into /usr. Do not execute anything from the checkout.
