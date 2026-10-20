@@ -6,7 +6,7 @@ set -euo pipefail
 
 REPO=https://github.com/randallyash/rog-z13-power-management.git
 SHARE=/usr/share/z13-power-management
-MIN="z13-power 1.3"
+MIN="z13-power 1.4"
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'setup: %s\n' "$*" >&2; exit 1; }
@@ -29,7 +29,7 @@ fi
 
 say "Z13 Power needs its backend before the pills can change watts."
 say "This will:"
-say "  - download rog-z13-power-management at d97479b49f25ffa2dcfb2743b2ca8ead9dc59136"
+say "  - download rog-z13-power-management at 9e3ce9f1e895a8d7dddff8a34d41d9531096400c"
 say "  - install that tree under $SHARE and link /usr/bin/z13-power"
 say "  - install the armoury udev rule, lock the SMU mailbox to root, and start z13-power-service"
 say "  - install python-pyqt6, python-pyudev, python-dbus-next, and libnotify if they are missing"
@@ -45,10 +45,10 @@ trap 'rm -rf "$tmp"' EXIT
 
 git -C "$tmp" init -q
 git -C "$tmp" remote add origin "$REPO"
-git -C "$tmp" fetch --depth 1 origin d97479b49f25ffa2dcfb2743b2ca8ead9dc59136
-git -C "$tmp" checkout --detach d97479b49f25ffa2dcfb2743b2ca8ead9dc59136
+git -C "$tmp" fetch --depth 1 origin 9e3ce9f1e895a8d7dddff8a34d41d9531096400c
+git -C "$tmp" checkout --detach 9e3ce9f1e895a8d7dddff8a34d41d9531096400c
 got="$(git -C "$tmp" rev-parse HEAD)"
-[[ "$got" == "d97479b49f25ffa2dcfb2743b2ca8ead9dc59136" ]] || die "checkout was $got"
+[[ "$got" == "9e3ce9f1e895a8d7dddff8a34d41d9531096400c" ]] || die "checkout was $got"
 [[ -f "$tmp/service/z13_power_hw.py" && -f "$tmp/scripts/z13-power" ]] || die "downloaded tree is incomplete"
 
 # Copy reviewed files into /usr. Do not execute anything from the checkout.
@@ -85,19 +85,23 @@ ln -sfn "$share/z13-power-overlay" /usr/bin/z13-power-overlay
 ln -sfn "$share/z13-power-config" /usr/bin/z13-power-config
 pacman -S --needed python-pyqt6 python-pyudev python-dbus-next libnotify
 udevadm control --reload-rules || true
-for a in ppt_pl1_spl ppt_pl2_sppt ppt_pl3_fppt; do
-  f="/sys/class/firmware-attributes/asus-armoury/attributes/$a/current_value"
-  [[ -e "$f" ]] || continue
-  chgrp users "$f" || true
-  chmod g+w "$f" || true
-done
 getent group z13-power >/dev/null || groupadd --system z13-power
 if [[ -n "${2:-}" && "${2}" != root ]]; then
   usermod -aG z13-power "${2}"
 fi
-/usr/lib/z13-power/lock-smu-sysfs
+install -m755 "$src/contrib/z13-power/lock-power-sysfs" /usr/lib/z13-power/lock-power-sysfs
+install -Dm644 "$src/contrib/udev/99-z13power-access.rules" /etc/udev/rules.d/99-z13power-access.rules
+install -Dm644 "$src/contrib/udev/99-z13power-access.rules" /usr/lib/udev/rules.d/99-z13power-access.rules
+install -m644 "$src/service/z13-power-perms.service" /usr/lib/systemd/system/z13-power-perms.service
+/usr/lib/z13-power/lock-power-sysfs "${2:-}"
 systemctl daemon-reload
 systemctl enable --now z13-power-smu.socket
+systemctl enable --now z13-power-perms.service
+if [[ -f /etc/systemd/system/z13ctl-perms.service && ! -L /etc/systemd/system/z13ctl-perms.service ]]; then
+  systemctl disable --now z13ctl-perms.service >/dev/null 2>&1 || true
+  rm -f /etc/systemd/system/z13ctl-perms.service
+fi
+systemctl mask --now z13ctl-perms.service >/dev/null 2>&1 || true
 ' bash "$tmp" "$USER"
 
 ver="$("$SHARE/z13-power" --version)"
