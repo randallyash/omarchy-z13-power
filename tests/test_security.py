@@ -2,7 +2,7 @@
 """Security checks for the Z13 Omarchy plugin helper.
 
 The helper must run as /usr/bin/python3, talk only to a root-owned
-z13-power 1.2.0+, and refuse z13ctl plus any other command.
+z13-power 1.3.0+, and refuse z13ctl plus any other command.
 """
 from __future__ import annotations
 
@@ -54,7 +54,9 @@ def main() -> None:
     setup = open(os.path.join(ROOT, "setup.sh"), encoding="utf-8").read()
     check(
         "setup pins backend and skips z13ctl",
-        "a2829da8b2b468cf244979e1e5f7cafe031e55d7" in setup
+        "d97479b49f25ffa2dcfb2743b2ca8ead9dc59136" in setup
+        and "lock-smu-sysfs" in setup
+        and "chmod a+w" not in setup
         and "z13-power-omarchy-setup" not in setup
         and "z13ctl is not used" in setup
         and "/usr/bin/z13ctl" not in setup,
@@ -64,10 +66,10 @@ def main() -> None:
     check("check-deps exits 0", deps.returncode == 0, deps.stderr)
     body = json.loads(deps.stdout)
     check("z13ctl not used", body["z13-power"]["z13ctl"] == "not used", deps.stdout)
-    check("backend 1.2", "1.2" in body["z13-power"]["version"], deps.stdout)
+    check("backend 1.3", "1.3" in body["z13-power"]["version"], deps.stdout)
 
     ver = run(["run", "--", "z13-power", "--version"])
-    check("run version", ver.returncode == 0 and ver.stdout.strip().startswith("z13-power 1.2"), ver.stderr or ver.stdout)
+    check("run version", ver.returncode == 0 and ver.stdout.strip().startswith("z13-power 1.3"), ver.stderr or ver.stdout)
 
     denied = run(["run", "--", "z13ctl", "--version"])
     check("z13ctl command refused", denied.returncode != 0 and "not allowed" in denied.stderr, denied.stderr)

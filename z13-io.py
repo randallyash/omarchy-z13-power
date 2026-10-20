@@ -44,9 +44,9 @@ class Pin:
     path: str = ""
 
 
-# z13-power 1.2.0 owns PPT, fans, lighting, and undervolt. Trust is the
-# root-owned /usr chain plus that version, not a digest of z13ctl.
-Z13_POWER_MIN = (1, 2, 0)
+# z13-power 1.3.0 keeps the SMU mailbox root-only. Trust is the root-owned
+# /usr chain plus that version, not a digest of z13ctl.
+Z13_POWER_MIN = (1, 3, 0)
 PIN_Z13_POWER = Pin(
     name="z13-power",
     rel=("share", "z13-power-management", "z13-power"),
@@ -613,7 +613,7 @@ def parse_semver(text: str) -> tuple[int, int, int] | None:
 
 
 def require_z13_power() -> None:
-    """Root-owned z13-power at 1.2.0 or newer. That release owns the hardware."""
+    """Root-owned z13-power at 1.3.0 or newer. That release owns the hardware."""
     fd = open_usr_file(PIN_Z13_POWER.rel)
     try:
         out, rc = spawn_fd(fd, ["--version"], 2.0, 256, 256)

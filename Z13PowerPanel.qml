@@ -229,7 +229,7 @@ Column {
 
     Text {
       width: parent.width
-      text: "The pills need z13-power 1.2.0. Install opens a terminal, asks you to type yes, then asks for your password. It does not install z13ctl."
+      text: "The pills need z13-power 1.3.0. Install opens a terminal, asks you to type yes, then asks for your password. It does not install z13ctl."
       textFormat: Text.PlainText
       wrapMode: Text.Wrap
       color: root.foreground

@@ -6,7 +6,7 @@ set -euo pipefail
 
 REPO=https://github.com/randallyash/rog-z13-power-management.git
 SHARE=/usr/share/z13-power-management
-MIN="z13-power 1.2"
+MIN="z13-power 1.3"
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'setup: %s\n' "$*" >&2; exit 1; }
@@ -16,7 +16,12 @@ die() { printf 'setup: %s\n' "$*" >&2; exit 1; }
 installed="$(
   "$SHARE/z13-power" --version 2>/dev/null || true
 )"
-if [[ "$installed" == "$MIN"* ]]; then
+rule=/etc/udev/rules.d/99-ryzen-smu.rules
+open_mailbox=0
+if [[ -f "$rule" ]] && grep -q 'a+w' "$rule"; then
+  open_mailbox=1
+fi
+if [[ "$installed" == "$MIN"* && "$open_mailbox" == 0 ]]; then
   say "Backend already installed: $installed"
   say "z13ctl is not used."
   exit 0
@@ -24,9 +29,9 @@ fi
 
 say "Z13 Power needs its backend before the pills can change watts."
 say "This will:"
-say "  - download rog-z13-power-management at a2829da8b2b468cf244979e1e5f7cafe031e55d7"
+say "  - download rog-z13-power-management at d97479b49f25ffa2dcfb2743b2ca8ead9dc59136"
 say "  - install that tree under $SHARE and link /usr/bin/z13-power"
-say "  - install the armoury udev rule and start z13-power-service"
+say "  - install the armoury udev rule, lock the SMU mailbox to root, and start z13-power-service"
 say "  - install python-pyqt6, python-pyudev, python-dbus-next, and libnotify if they are missing"
 say "It will not install z13ctl, and it will not replace this plugin."
 say "Quiet uses the firmware quiet profile. It does not pin the SMU."
@@ -40,10 +45,10 @@ trap 'rm -rf "$tmp"' EXIT
 
 git -C "$tmp" init -q
 git -C "$tmp" remote add origin "$REPO"
-git -C "$tmp" fetch --depth 1 origin a2829da8b2b468cf244979e1e5f7cafe031e55d7
-git -C "$tmp" checkout --detach a2829da8b2b468cf244979e1e5f7cafe031e55d7
+git -C "$tmp" fetch --depth 1 origin d97479b49f25ffa2dcfb2743b2ca8ead9dc59136
+git -C "$tmp" checkout --detach d97479b49f25ffa2dcfb2743b2ca8ead9dc59136
 got="$(git -C "$tmp" rev-parse HEAD)"
-[[ "$got" == "a2829da8b2b468cf244979e1e5f7cafe031e55d7" ]] || die "checkout was $got"
+[[ "$got" == "d97479b49f25ffa2dcfb2743b2ca8ead9dc59136" ]] || die "checkout was $got"
 [[ -f "$tmp/service/z13_power_hw.py" && -f "$tmp/scripts/z13-power" ]] || die "downloaded tree is incomplete"
 
 # Copy reviewed files into /usr. Do not execute anything from the checkout.
@@ -51,7 +56,7 @@ sudo bash -c '
 set -euo pipefail
 src="${1:?}"
 share=/usr/share/z13-power-management
-install -d "$share/contrib/ryzen-smu" /usr/bin /usr/lib/systemd/user /usr/lib/udev/rules.d
+install -d "$share/contrib/ryzen-smu" /usr/bin /usr/lib/z13-power /usr/lib/systemd/user /usr/lib/systemd/system /usr/lib/udev/rules.d
 install -m755 "$src/scripts/z13-power" "$share/z13-power"
 install -m755 "$src/service/z13-power-service" "$share/z13-power-service"
 install -m755 "$src/service/z13-power-settings" "$share/z13-power-settings"
@@ -64,6 +69,13 @@ install -m644 "$src/service/z13_power_io.py" "$share/z13_power_io.py"
 install -m644 "$src/kde/powerdevilrc" "$share/powerdevilrc"
 install -m644 "$src/service/z13-power-service.service" /usr/lib/systemd/user/z13-power-service.service
 install -Dm644 "$src/contrib/ryzen-smu/99-ryzen-smu.rules" "$share/contrib/ryzen-smu/99-ryzen-smu.rules"
+install -Dm644 "$src/contrib/ryzen-smu/99-ryzen-smu.rules" /etc/udev/rules.d/99-ryzen-smu.rules
+install -Dm644 "$src/contrib/ryzen-smu/99-ryzen-smu.rules" /usr/lib/udev/rules.d/99-ryzen-smu.rules
+install -m755 "$src/contrib/ryzen-smu/lock-smu-sysfs" /usr/lib/z13-power/lock-smu-sysfs
+install -m755 "$src/contrib/ryzen-smu/lock-smu-sysfs" "$share/contrib/ryzen-smu/lock-smu-sysfs"
+install -m755 "$src/service/z13-power-smu" /usr/lib/z13-power/z13-power-smu
+install -m644 "$src/service/z13-power-smu.socket" /usr/lib/systemd/system/z13-power-smu.socket
+install -m644 "$src/service/z13-power-smu@.service" /usr/lib/systemd/system/z13-power-smu@.service
 install -Dm644 "$src/contrib/ryzen-smu/ryzen_smu.conf" "$share/contrib/ryzen-smu/ryzen_smu.conf"
 install -Dm644 "$src/contrib/udev/99-z13-power-armoury-ppt.rules" /usr/lib/udev/rules.d/99-z13-power-armoury-ppt.rules
 ln -sfn "$share/z13-power" /usr/bin/z13-power
@@ -79,7 +91,14 @@ for a in ppt_pl1_spl ppt_pl2_sppt ppt_pl3_fppt; do
   chgrp users "$f" || true
   chmod g+w "$f" || true
 done
-' bash "$tmp"
+getent group z13-power >/dev/null || groupadd --system z13-power
+if [[ -n "${2:-}" && "${2}" != root ]]; then
+  usermod -aG z13-power "${2}"
+fi
+/usr/lib/z13-power/lock-smu-sysfs
+systemctl daemon-reload
+systemctl enable --now z13-power-smu.socket
+' bash "$tmp" "$USER"
 
 ver="$("$SHARE/z13-power" --version)"
 [[ "$ver" == "$MIN"* ]] || die "installed $ver, wanted $MIN or newer"
